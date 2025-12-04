@@ -40,7 +40,7 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
                 piece = board[x,y]
                 if piece.color + piece.type == color + 'p' :
                     print("Call move Pawn")
-                    all_moves.append(((x,y),(movePawn(board, x, y).copy())))
+                    all_moves.append(((x,y),(movePawn(board, x, y, color).copy())))
                     print("All pawn moves" + str(all_moves))
     return (0,0), (0,0)
 
@@ -55,13 +55,9 @@ def evaluate(board,color,piece_values):
                 #print(piece.type + piece.color + str(score))
     if color == 'b': score = -score 
     return score
-
-    
-
     
 #   Example how to register the function
-
-def movePawn(board, x, y):
+def movePawn(board, x, y, color):
     moveList = []
     if board[x+1,y] == "":
         moveList.append((x+1, y))
@@ -70,6 +66,17 @@ def movePawn(board, x, y):
     if y-1 >= 0 and (board[x+1,y-1] != "" and board[x+1,y-1].color != color):
         moveList.append((x+1, y-1))
     return moveList
+
+def moveKnight(board, x, y, color):
+    moveList = []
+    moves = [(1,2),(1,-2),(-1,2),(1,-2),(2,1),(2,-1)(-2,1)(-2,-1)]
+    for i in moves: 
+        if 7 >= x + moves[i][0] >= 0 and 7 >= y + moves[i][1] >= 0 :
+            piece = board[x,y]
+            if piece == "" or piece.color != color:
+                return 
+
+
 
 
 register_chess_bot("A.L.P.H.A", chess_bot)
