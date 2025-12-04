@@ -70,13 +70,16 @@ def movePawn(board, x, y, color):
 def moveKnight(board, x, y, color):
     moveList = []
     moves = [(1,2),(1,-2),(-1,2),(1,-2),(2,1),(2,-1)(-2,1)(-2,-1)]
-    for i in moves: 
-        if 7 >= x + moves[i][0] >= 0 and 7 >= y + moves[i][1] >= 0 :
+    for move in moves: 
+        if 7 >= x + move[0] >= 0 and 7 >= y + move[1] >= 0 :
             piece = board[x,y]
             if piece == "" or piece.color != color:
-                return 
+                moveList.append((move[0]+x,move[1]+y))
+    return moveList
 
-
+def moveKing(board, x, y, color):
+    moveList = []
+    moves = [(0,1),(0,-1),(-1,-1),(-1,0),(-1,1),(1,-1),(1,0)(1,1)]
 
 
 register_chess_bot("A.L.P.H.A", chess_bot)
