@@ -76,9 +76,7 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
                 state.children.append(new_state)
                 new_states.append(new_state)
         states = new_states
-        print(color)
         color = swap(color)
-        print("TESTTTT")
     print("number of possibilities calculated: " + str(len(states)))
 
     color = player_sequence[1]
@@ -99,25 +97,21 @@ def calldfs(head,piece_values):
     def dfs(state):
 
         if len(state.children) == 0:
-            return [evaluate(state.board,state.color,piece_values)]
-        
+            return -evaluate(state.board,state.color,piece_values)
+    
         values = []
         for child in state.children:
-            value = max(dfs(child))
-            values.append(-value)
-        print(str(state.color)+str(values))
-        return values
+            values.append(dfs(child))
 
-    values = dfs(head)
-    move = [(),()]
+        print(state.color,values)
+        return -max(values)
+
     maxvalue = -10000
-    for i in range(len(values)):
-        if values[i] > maxvalue:
-            maxvalue = values[i]
-            move = head.children[i].move
-            print(str(maxvalue)+str(move))
-    print("estimated best: " +str(maxvalue))
-    print("nextmove" + str(move))
+    for child in head.children:
+        value = dfs(child)
+        if value > maxvalue:
+            maxvalue = value
+            move = child.move
     return move
 
 def swap(color):
