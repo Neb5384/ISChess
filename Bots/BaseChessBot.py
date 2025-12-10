@@ -38,12 +38,37 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
         for y in range(board.shape[1]):
             if board[x,y] != "":
                 piece = board[x,y]
+                #TODO : CAN WE MAKE IT IN SWTICH CASE ? PYTHON IS BAD FOR CONCATENATION + SWITCH CASe
+                #CHANGES : ADDED EVALUATION IN ALL THE POSSIBLE MOVES -> EASIER TO DO GREED DEPTH SEARCH AFTER
                 if piece.color + piece.type == color + 'p' :
-                    print("Call move Pawn")
-                    all_moves.append(((x,y),(movePawn(board, x, y, color).copy())))
-                    print("All pawn moves" + str(all_moves))
+                    moves = movePawn(board, x, y, color)
+                elif piece.color + piece.type == color + 'n' :
+                    moves = moveKnight(board, x, y, color)
+                elif piece.color + piece.type == color + 'b' :
+                    moves = moveBishop(board, x, y, color)
+                elif piece.color + piece.type == color + 'r' :
+                    moves = moveRook(board, x, y, color)
+                elif piece.color + piece.type == color + 'q' :
+                    moves = moveQueen(board, x, y, color)
+                elif piece.color + piece.type == color + 'K' :
+                    moves = moveKing(board, x, y, color)
+                else:
+                    continue
+
+                try:
+                    for move in moves:
+                        new_board = simulate_move(board, x, y, move[0], move[1])
+                        new_ev = evaluate(new_board, color, piece_values)
+                        all_moves.append(((x,y),moves, new_ev))
+                except:
+                    continue
+                
+
+    print("All moves : " + str(all_moves))
     return (0,0), (0,0)
 
+    #CREATE ALL POSSIBLE MOVES
+    
 
 def evaluate(board,color,piece_values):
     score = 0
@@ -56,7 +81,16 @@ def evaluate(board,color,piece_values):
     if color == 'b': score = -score 
     return score
     
-#   Example how to register the function
+def simulate_move(board, x, y, nx, ny):
+    new_board = board.copy()
+
+    piece = new_board[x,y]
+    new_board[x,y] = ""
+    new_board[nx,ny] = piece
+
+    return new_board
+
+#PIECE VALID MOVEMENT 
 def movePawn(board, x, y, color):
     moveList = []
     if board[x+1,y] == "":
@@ -69,17 +103,63 @@ def movePawn(board, x, y, color):
 
 def moveKnight(board, x, y, color):
     moveList = []
-    moves = [(1,2),(1,-2),(-1,2),(1,-2),(2,1),(2,-1)(-2,1)(-2,-1)]
+    moves = [(2,1),(-2,1),(2,-1),(-2,1),(1,2),(-1,2),(1,-2),(-1,-2)]
     for move in moves: 
         if 7 >= x + move[0] >= 0 and 7 >= y + move[1] >= 0 :
-            piece = board[x,y]
-            if piece == "" or piece.color != color:
+            nextPlace = board[x + move[0],y + move[1]] #CHANGED PIECE LOGIC, BENNO YOU WERENT CHECKInG LE BON MON REUF -> NOW NEXTPLACE = MOVE DESTINATION
+            if nextPlace == "" or nextPlace.color != color:
                 moveList.append((move[0]+x,move[1]+y))
     return moveList
 
 def moveKing(board, x, y, color):
     moveList = []
     moves = [(0,1),(0,-1),(-1,-1),(-1,0),(-1,1),(1,-1),(1,0)(1,1)]
+    for move in moves:
+        if 7 >= x + move[0] >= 0 and 7 >= y + move[1] >= 0 :
+            nextPlace = board[x + move[0],y + move[1]]
+            if nextPlace == "" or nextPlace.color != color:
+                moveList.append((move[0] + x, move[1] + y))
+    return moveList
+
+def moveRook(board, x, y, color):
+    moveList = []
+    directions = [(1,0), (-1,0), (0,1), (0,-1)]
+    for dx, dy in directions:
+        nx, ny = x + dx, y + dy
+        while 0 <= nx <= 7 and 0 <= ny <= 7:
+            if board[nx, ny] == "":
+                moveList.append((nx, ny))
+            elif board[nx, ny].color != color:
+                moveList.append((nx, ny))
+                break
+            else:  #same color piece blocking the way
+                break
+            nx += dx
+            ny += dy
+    return moveList
+
+def moveBishop(board, x, y, color):
+    moveList = []
+    directions = [(1,1), (1,-1), (-1,1), (-1,-1)]
+    for dx, dy in directions:
+        nx, ny = x + dx, y + dy
+        while 0 <= nx <= 7 and 0 <= ny <= 7:
+            if board[nx, ny] == "":
+                moveList.append((nx, ny))
+            elif board[nx, ny].color != color:
+                moveList.append((nx, ny))
+                break
+            else:  #same color piece blocking the way
+                break
+            nx += dx
+            ny += dy
+    return moveList
+
+def moveQueen(board,x,y,color):
+    moveList = []
+    moveList.append(moveRook(board,x,y,color))
+    moveList.append(moveBishop(board,x,y,color))
+    return moveList
 
 
 register_chess_bot("A.L.P.H.A", chess_bot)
