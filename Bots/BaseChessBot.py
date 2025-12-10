@@ -52,7 +52,7 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
                         match piece.color+piece.type:
                             case p if p == color + 'p': 
                                 moves = movePawn(board, x, y, color)
-                            case n if n == color + 'n':
+                            case kn if kn == color + 'n':
                                 moves = moveKnight(board, x, y, color)
                             case b if b == color + 'b' :
                                 moves = moveBishop(board, x, y, color)
