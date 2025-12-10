@@ -38,7 +38,7 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
     states = [head]
     n = 0
 
-    while n<2:
+    while n<3:
         new_states = []
         n += 1
         for state in states:
@@ -48,21 +48,23 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
                 for y in range(board.shape[1]):
                     if board[x,y] != "":
                         piece = board[x,y]
-                        #TODO : CAN WE MAKE IT IN SWTICH CASE ? PYTHON IS BAD FOR CONCATENATION + SWITCH CASe
-                        if piece.color + piece.type == color + 'p' :
-                            moves = movePawn(board, x, y, color)
-                        elif piece.color + piece.type == color + 'n' :
-                            moves = moveKnight(board, x, y, color)
-                        elif piece.color + piece.type == color + 'b' :
-                            moves = moveBishop(board, x, y, color)
-                        elif piece.color + piece.type == color + 'r' :
-                            moves = moveRook(board, x, y, color)
-                        elif piece.color + piece.type == color + 'q' :
-                            moves = moveQueen(board, x, y, color)
-                        elif piece.color + piece.type == color + 'k' :
-                            moves = moveKing(board, x, y, color)
-                        else:
-                            continue
+
+                        match piece.color+piece.type:
+                            case p if p == color + 'p': 
+                                moves = movePawn(board, x, y, color)
+                            case n if n == color + 'n':
+                                moves = moveKnight(board, x, y, color)
+                            case b if b == color + 'b' :
+                                moves = moveBishop(board, x, y, color)
+                            case r if r == color + 'r' :
+                                moves = moveRook(board, x, y, color)
+                            case q if q == color + 'q' :
+                                moves = moveQueen(board, x, y, color)
+                            case k if k == color + 'k' :
+                                moves = moveKing(board, x, y, color)
+                            case _:
+                                continue
+
                         if len(moves) != 0:
                             for move in moves:
                                 all_moves.append([(x,y),move])
@@ -103,17 +105,17 @@ def calldfs(head,piece_values):
         for child in state.children:
             values.append(-dfs(child))
 
-        print(state.color,values)
+        #print(state.color,values)
         return max(values)
 
     maxvalue = -10000
     for child in head.children:
         value = -dfs(child)
-        print(value,child.move)
+        #print(value,child.move)
         if value > maxvalue:
             maxvalue = value
             move = child.move
-    print(maxvalue,move)
+    #print(maxvalue,move)
     return move
 
 def swap(color):
