@@ -96,9 +96,9 @@ def calldfs(head, color,piece_values):
         if color == "b": color = "w"
         else: color = "b"
         for child in state.children:
-            value = max(dfs(child,color))
+            value = -min(dfs(child,color))
             values.append(value)
-    
+        print(str(color)+str(values))
         return values
 
     values = dfs(head, color)
