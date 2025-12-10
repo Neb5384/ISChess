@@ -27,8 +27,8 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
         "br" : -5,
         "wq" : 9,
         "bq" : -9,
-        "wk" : 0,
-        "bk" : 0
+        "wk" : 1000,
+        "bk" : -1000
         }
 
     ev = evaluate(board,color,piece_values)
@@ -37,7 +37,8 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
     head =  State(board, [])
     states = [head]
     n = 0
-    while n<5:
+
+    while n<3:
         new_states = []
         n += 1
         for state in states:
@@ -58,35 +59,50 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
                             moves = moveRook(board, x, y, color)
                         elif piece.color + piece.type == color + 'q' :
                             moves = moveQueen(board, x, y, color)
-                        elif piece.color + piece.type == color + 'K' :
+                        elif piece.color + piece.type == color + 'k' :
                             moves = moveKing(board, x, y, color)
                         else:
                             continue
-                        all_moves.append(moves)
+                        if len(moves) != 0:
+                            for move in moves:
+                                all_moves.append([(x,y),move])
+
+            #print(all_moves)
             for move in all_moves:
-                new_board = simulate_move(board, x, y, move[0], move[1])
+                #print(move)
+                new_board = simulate_move(board, move[0][0], move[0][1], move[1][0], move[1][1])
+                #print(new_board)
                 new_state = State(new_board, [])
                 state.children.append(new_state)
                 new_states.append(new_state)
         states = new_states
-           
-    def bfs(state, depth,color):
-            if len(state.children) == 0:
-                return evaluate(state.board,color,piece_values)
-            
-            values = []
-            if color == "b": color = "w"
-            else: color = "b"
-            for child in state.children:
-                value = bfs(state,depth,color)
-                values.append(value)
-            return max(values), state
+
+    max = dfs(head, color, piece_values,depth = 0)
+    print(max)
 
 
 class State:
     def __init__(self, board, children = []):
         self.board = board
         self.children = children
+
+def dfs(state, color,piece_values,depth):
+    if len(state.children) == 0:
+        return evaluate(state.board,color,piece_values)
+    
+    values = []
+    if color == "b": color = "w"
+    else: color = "b"
+    for child in state.children:
+        value = dfs(child,color,piece_values,depth+1)
+        values.append(value)
+    
+
+    if depth == 0:
+        return max(values)
+    else:
+        return max(values)
+
     
 def evaluate(board,color,piece_values):
     score = 0
@@ -102,7 +118,8 @@ def evaluate(board,color,piece_values):
 def simulate_move(board, x, y, nx, ny):
     new_board = board.copy()
 
-    piece = new_board[x,y]
+    piece = board[x,y]
+    #print("simulating move on"+str(piece))
     new_board[x,y] = ""
     new_board[nx,ny] = piece
 
@@ -131,7 +148,7 @@ def moveKnight(board, x, y, color):
 
 def moveKing(board, x, y, color):
     moveList = []
-    moves = [(0,1),(0,-1),(-1,-1),(-1,0),(-1,1),(1,-1),(1,0)(1,1)]
+    moves = [(0,1),(0,-1),(-1,-1),(-1,0),(-1,1),(1,-1),(1,0),(1,1)]
     for move in moves:
         if 7 >= x + move[0] >= 0 and 7 >= y + move[1] >= 0 :
             nextPlace = board[x + move[0],y + move[1]]
@@ -187,8 +204,8 @@ def moveBishop(board, x, y, color):
 
 def moveQueen(board,x,y,color):
     moveList = []
-    moveList.append(moveRook(board,x,y,color))
-    moveList.append(moveBishop(board,x,y,color))
+    moveList += moveRook(board,x,y,color)
+    moveList += moveBishop(board,x,y,color)
     return moveList
 
 
