@@ -34,11 +34,11 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
     ev = evaluate(board,color,piece_values)
     print("evaluation : " + str(ev))
 
-    head =  State(board, [],[(),()])
+    head =  State(board,color, [],[(),()])
     states = [head]
     n = 0
 
-    while n<3:
+    while n<2:
         new_states = []
         n += 1
         for state in states:
@@ -72,47 +72,57 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
                 #print(move)
                 new_board = simulate_move(board, move[0][0], move[0][1], move[1][0], move[1][1])
                 #print(new_board)
-                new_state = State(new_board, [],move)
+                new_state = State(new_board,swap(color), [],move)
                 state.children.append(new_state)
                 new_states.append(new_state)
         states = new_states
+        print(color)
+        color = swap(color)
+        print("TESTTTT")
+    print("number of possibilities calculated: " + str(len(states)))
 
-    nextmove = calldfs(head, color, piece_values)
+    color = player_sequence[1]
+    nextmove = calldfs(head, piece_values)
     return nextmove
 
 
 class State:
-    def __init__(self, board, children = [],move =[(),()]):
+    def __init__(self, board,color, children = [],move =[(),()]):
         self.board = board
         self.children = children
         self.move = move
+        self.color = color
 
-def calldfs(head, color,piece_values):
-    def dfs(state, color):
+
+
+def calldfs(head,piece_values):
+    def dfs(state):
+
         if len(state.children) == 0:
-            return [evaluate(state.board,color,piece_values)]
+            return [evaluate(state.board,state.color,piece_values)]
         
         values = []
-        if color == "b": color = "w"
-        else: color = "b"
         for child in state.children:
-            value = -min(dfs(child,color))
-            values.append(value)
-        print(str(color)+str(values))
+            value = max(dfs(child))
+            values.append(-value)
+        print(str(state.color)+str(values))
         return values
 
-    values = dfs(head, color)
+    values = dfs(head)
     move = [(),()]
     maxvalue = -10000
     for i in range(len(values)):
         if values[i] > maxvalue:
             maxvalue = values[i]
             move = head.children[i].move
-    print("estimated best:" +str(maxvalue))
+            print(str(maxvalue)+str(move))
+    print("estimated best: " +str(maxvalue))
     print("nextmove" + str(move))
     return move
 
-
+def swap(color):
+    if color == "b": return "w"
+    else: return "b"
     
 def evaluate(board,color,piece_values):
     score = 0
