@@ -97,21 +97,23 @@ def calldfs(head,piece_values):
     def dfs(state):
 
         if len(state.children) == 0:
-            return -evaluate(state.board,state.color,piece_values)
+            return evaluate(state.board,state.color,piece_values)
     
         values = []
         for child in state.children:
-            values.append(dfs(child))
+            values.append(-dfs(child))
 
         print(state.color,values)
-        return -max(values)
+        return max(values)
 
     maxvalue = -10000
     for child in head.children:
-        value = dfs(child)
+        value = -dfs(child)
+        print(value,child.move)
         if value > maxvalue:
             maxvalue = value
             move = child.move
+    print(maxvalue,move)
     return move
 
 def swap(color):
