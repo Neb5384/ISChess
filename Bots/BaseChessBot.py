@@ -9,12 +9,11 @@
 
 #   Be careful with modules to import from the root (don't forget the Bots.)
 from Bots.ChessBotList import register_chess_bot
-
+import random
 #   Simply move the pawns forward and tries to capture as soon as possible
 def chess_bot(player_sequence, board, time_budget, **kwargs):
     pieces = ['p', 'n', 'b', 'r', 'q', 'K']
     
-    all_moves=[]
 
     color = player_sequence[1]
     piece_values = {
@@ -31,45 +30,64 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
         "wk" : 0,
         "bk" : 0
         }
+
     ev = evaluate(board,color,piece_values)
     print("evaluation : " + str(ev))
 
-    for x in range(board.shape[0]):
-        for y in range(board.shape[1]):
-            if board[x,y] != "":
-                piece = board[x,y]
-                #TODO : CAN WE MAKE IT IN SWTICH CASE ? PYTHON IS BAD FOR CONCATENATION + SWITCH CASe
-                #CHANGES : ADDED EVALUATION IN ALL THE POSSIBLE MOVES -> EASIER TO DO GREED DEPTH SEARCH AFTER
-                if piece.color + piece.type == color + 'p' :
-                    moves = movePawn(board, x, y, color)
-                elif piece.color + piece.type == color + 'n' :
-                    moves = moveKnight(board, x, y, color)
-                elif piece.color + piece.type == color + 'b' :
-                    moves = moveBishop(board, x, y, color)
-                elif piece.color + piece.type == color + 'r' :
-                    moves = moveRook(board, x, y, color)
-                elif piece.color + piece.type == color + 'q' :
-                    moves = moveQueen(board, x, y, color)
-                elif piece.color + piece.type == color + 'K' :
-                    moves = moveKing(board, x, y, color)
-                else:
-                    continue
+    head =  State(board, [])
+    states = [head]
+    n = 0
+    while n<5:
+        new_states = []
+        n += 1
+        for state in states:
+            all_moves=[]
+            board = state.board
+            for x in range(board.shape[0]):
+                for y in range(board.shape[1]):
+                    if board[x,y] != "":
+                        piece = board[x,y]
+                        #TODO : CAN WE MAKE IT IN SWTICH CASE ? PYTHON IS BAD FOR CONCATENATION + SWITCH CASe
+                        if piece.color + piece.type == color + 'p' :
+                            moves = movePawn(board, x, y, color)
+                        elif piece.color + piece.type == color + 'n' :
+                            moves = moveKnight(board, x, y, color)
+                        elif piece.color + piece.type == color + 'b' :
+                            moves = moveBishop(board, x, y, color)
+                        elif piece.color + piece.type == color + 'r' :
+                            moves = moveRook(board, x, y, color)
+                        elif piece.color + piece.type == color + 'q' :
+                            moves = moveQueen(board, x, y, color)
+                        elif piece.color + piece.type == color + 'K' :
+                            moves = moveKing(board, x, y, color)
+                        else:
+                            continue
+                        all_moves.append(moves)
+            for move in all_moves:
+                new_board = simulate_move(board, x, y, move[0], move[1])
+                new_state = State(new_board, [])
+                state.children.append(new_state)
+                new_states.append(new_state)
+        states = new_states
+           
+    def bfs(state, depth,color):
+            if len(state.children) == 0:
+                return evaluate(state.board,color,piece_values)
+            
+            values = []
+            if color == "b": color = "w"
+            else: color = "b"
+            for child in state.children:
+                value = bfs(state,depth,color)
+                values.append(value)
+            return max(values), state
 
-                try:
-                    for move in moves:
-                        new_board = simulate_move(board, x, y, move[0], move[1])
-                        new_ev = evaluate(new_board, color, piece_values)
-                        all_moves.append(((x,y),moves, new_ev))
-                except:
-                    continue
-                
 
-    print("All moves : " + str(all_moves))
-    return (0,0), (0,0)
-
-    #CREATE ALL POSSIBLE MOVES
+class State:
+    def __init__(self, board, children = []):
+        self.board = board
+        self.children = children
     
-
 def evaluate(board,color,piece_values):
     score = 0
     for x in range(board.shape[0]):
@@ -134,12 +152,17 @@ def moveRook(board, x, y, color):
                 break
             else:  #same color piece blocking the way
                 break
+
             nx += dx
             ny += dy
+            #print("Rook move added : " + str((nx, ny)))
+
     return moveList
 
 def moveBishop(board, x, y, color):
     moveList = []
+    #TODO : HAS TO BE DONE AGAIN - NOT TAKING ALL POSSIBILITIES
+    
     directions = [(1,1), (1,-1), (-1,1), (-1,-1)]
     for dx, dy in directions:
         nx, ny = x + dx, y + dy
@@ -153,6 +176,13 @@ def moveBishop(board, x, y, color):
                 break
             nx += dx
             ny += dy
+            #print("Bishop move added : " + str((nx, ny)))
+    """
+    for i in range(1, 7):
+        if x + i <= 7 and y + i <= 7:
+            if board[x + i, y + i] == "" or board[x + i, y + i].color != color:
+                moveList.append((x + i, y + i))
+    """
     return moveList
 
 def moveQueen(board,x,y,color):
@@ -160,6 +190,7 @@ def moveQueen(board,x,y,color):
     moveList.append(moveRook(board,x,y,color))
     moveList.append(moveBishop(board,x,y,color))
     return moveList
+
 
 
 register_chess_bot("A.L.P.H.A", chess_bot)
