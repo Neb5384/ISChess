@@ -91,8 +91,12 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
                 else:
                     score_diff = 0
                 score = -base_score - score_diff
+
                 #print(move)
-                new_board = simulate_move(board, move[0][0], move[0][1], move[1][0], move[1][1])
+                new_board, promotion = simulate_move(board, move[0][0], move[0][1], move[1][0], move[1][1])
+                if promotion:
+                    score -= piece_values_abs["q"]
+                    
                 #print(new_board)
                 new_state = State(new_board,swap(color), [],move,score)
                 #print(board_to_string(new_state.board))
@@ -166,12 +170,14 @@ def simulate_move(board, x, y, nx, ny):
 
     #print("simulating move on"+str(piece))
     new_board[x,y] = ""
-    if piece.type != "p":
-        new_board[nx,ny] = piece
+    if piece[0] == "p" and (nx == 0 or nx == 7):
+        new_board[nx,ny] = 'q' + piece[1]
+        promotion = True
     else:
-        new_board[nx,ny] = 'q' + piece.color
+        new_board[nx,ny] = piece
+        promotion = False
 
-    return new_board
+    return new_board, promotion
 
 
 def board_to_string(board):
