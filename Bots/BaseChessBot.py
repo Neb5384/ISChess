@@ -16,6 +16,7 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
     
 
     color = player_sequence[1]
+    base_color = color
     piece_values = {
         "wp" : 1,
         "bp" : -1,
@@ -51,7 +52,7 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
 
                         match piece.color+piece.type:
                             case p if p == color + 'p': 
-                                moves = movePawn(board, x, y, color)
+                                moves = movePawn(board, x, y, color,base_color)
                             case kn if kn == color + 'n':
                                 moves = moveKnight(board, x, y, color)
                             case b if b == color + 'b' :
@@ -79,6 +80,7 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
                 new_states.append(new_state)
         states = new_states
         color = swap(color)
+        print(color)
     print("number of possibilities calculated: " + str(len(states)))
 
     color = player_sequence[1]
@@ -144,14 +146,19 @@ def simulate_move(board, x, y, nx, ny):
     return new_board
 
 #PIECE VALID MOVEMENT 
-def movePawn(board, x, y, color):
+def movePawn(board, x, y, color, base_color):
+    if color == base_color:
+        dir = 1
+    else:
+        dir = -1
     moveList = []
-    if board[x+1,y] == "":
-        moveList.append((x+1, y))
-    if y+1 <= 7 and (board[x+1,y+1] != "" and board[x+1,y+1].color != color):
-        moveList.append((x+1, y+1))
-    if y-1 >= 0 and (board[x+1,y-1] != "" and board[x+1,y-1].color != color):
-        moveList.append((x+1, y-1))
+
+    if board[x+dir,y] == "":
+        moveList.append((x+dir, y))
+    if y+1 <= 7 and (board[x+dir,y+1] != "" and board[x+dir,y+1].color != color):
+        moveList.append((x+dir, y+1))
+    if y-1 >= 0 and (board[x+dir,y-1] != "" and board[x+dir,y-1].color != color):
+        moveList.append((x+dir, y-1))
     return moveList
 
 def moveKnight(board, x, y, color):
