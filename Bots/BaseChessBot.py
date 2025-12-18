@@ -17,6 +17,7 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
     
 
     color = player_sequence[1]
+    base_color = color
     piece_values = {
         "wp" : 1,
         "bp" : -1,
@@ -55,7 +56,7 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
 
                         match piece.color+piece.type:
                             case p if p == color + 'p': 
-                                moves = movePawn(board, x, y, color)
+                                moves = movePawn(board, x, y, color,base_color)
                             case kn if kn == color + 'n':
                                 moves = moveKnight(board, x, y, color)
                             case b if b == color + 'b' :
@@ -113,8 +114,15 @@ def calldfs(head,piece_values):
         if len(state.children) == 0:
             return evaluate(state.board,state.color,piece_values)
     
+            return evaluate(state.board,state.color,piece_values)
+    
         values = []
         for child in state.children:
+            values.append(-dfs(child))
+
+        #print(state.color,values)
+        return max(values)
+
             values.append(-dfs(child))
 
         #print(state.color,values)
@@ -181,20 +189,24 @@ def board_to_string(board):
     return '\n'.join(lines)
 
 #PIECE VALID MOVEMENT 
-def movePawn(board, x, y, color):
+def movePawn(board, x, y, color, base_color):
+    if color == base_color:
+        dir = 1
+    else:
+        dir = -1
     moveList = []
-    if x+1 <= 7:
-        if board[x+1,y] == "":
-            moveList.append((x+1, y))
-        if y+1 <= 7 and (board[x+1,y+1] != "" and board[x+1,y+1].color != color):
-            moveList.append((x+1, y+1))
-        if y-1 >= 0 and (board[x+1,y-1] != "" and board[x+1,y-1].color != color):
-            moveList.append((x+1, y-1))
+
+    if board[x+dir,y] == "":
+        moveList.append((x+dir, y))
+    if y+1 <= 7 and (board[x+dir,y+1] != "" and board[x+dir,y+1].color != color):
+        moveList.append((x+dir, y+1))
+    if y-1 >= 0 and (board[x+dir,y-1] != "" and board[x+dir,y-1].color != color):
+        moveList.append((x+dir, y-1))
     return moveList
 
 def moveKnight(board, x, y, color):
     moveList = []
-    moves = [(2,1),(-2,1),(2,-1),(-2,1),(1,2),(-1,2),(1,-2),(-1,-2)]
+    moves = [(2,1),(-2,1),(2,-1),(-2,-1),(1,2),(-1,2),(1,-2),(-1,-2)]
     for move in moves: 
         if 7 >= x + move[0] >= 0 and 7 >= y + move[1] >= 0 :
             nextPlace = board[x + move[0],y + move[1]] #CHANGED PIECE LOGIC, BENNO YOU WERENT CHECKInG LE BON MON REUF -> NOW NEXTPLACE = MOVE DESTINATION
