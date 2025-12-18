@@ -62,7 +62,7 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
                     if board[x,y] != "":
                         piece = board[x,y]
 
-                        match piece.color+piece.type:
+                        match piece[1]+piece[0]:
                             case p if p == color + 'p': 
                                 moves = movePawn(board, x, y, color,base_color)
                             case kn if kn == color + 'n':
@@ -85,8 +85,8 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
             #print(all_moves)
             for move in all_moves:
                 base_score = state.score
-                if state.board[move[1]] != '' and state.board[move[1]].color != color:
-                    score_diff = piece_values_abs[state.board[move[1]].type]
+                if state.board[move[1]] != '' and state.board[move[1]][1] != color:
+                    score_diff = piece_values_abs[state.board[move[1]][0]]
                     #print(board_to_string(state.board))
                 else:
                     score_diff = 0
@@ -129,7 +129,7 @@ def calldfs(head, piece_values):
         for child in state.children:
             values.append(-dfs(child))
 
-        #print(state.color, values)
+        #print(state[1], values)
         return max(values) 
 
     maxvalue = -10000
@@ -154,8 +154,8 @@ def evaluate(board,color,piece_values):
         for y in range(board.shape[1]):
             if board[x,y] != "":
                 piece = board[x,y]
-                score += piece_values[piece.color + piece.type]
-                #print(piece.type + piece.color + str(score))
+                score += piece_values[piece[1] + piece[0]]
+                #print(piece[0] + piece[1] + str(score))
     if color == 'b': score = -score 
     return score
     
@@ -193,8 +193,8 @@ def board_to_string(board):
             if cell == "" or cell is None:
                 row.append('.')
             else:
-                # piece has attributes .type and .color
-                row.append(f"{cell.type}{cell.color}")
+                # piece has attributes [0] and [1]
+                row.append(f"{cell[0]}{cell[1]}")
         lines.append(' '.join(row))
     return '\n'.join(lines)
 
@@ -208,9 +208,9 @@ def movePawn(board, x, y, color, base_color):
 
     if board[x+dir,y] == "":
         moveList.append((x+dir, y))
-    if y+1 <= 7 and (board[x+dir,y+1] != "" and board[x+dir,y+1].color != color):
+    if y+1 <= 7 and (board[x+dir,y+1] != "" and board[x+dir,y+1][1] != color):
         moveList.append((x+dir, y+1))
-    if y-1 >= 0 and (board[x+dir,y-1] != "" and board[x+dir,y-1].color != color):
+    if y-1 >= 0 and (board[x+dir,y-1] != "" and board[x+dir,y-1][1] != color):
         moveList.append((x+dir, y-1))
     return moveList
 
@@ -220,7 +220,7 @@ def moveKnight(board, x, y, color):
     for move in moves: 
         if 7 >= x + move[0] >= 0 and 7 >= y + move[1] >= 0 :
             nextPlace = board[x + move[0],y + move[1]] #CHANGED PIECE LOGIC, BENNO YOU WERENT CHECKInG LE BON MON REUF -> NOW NEXTPLACE = MOVE DESTINATION
-            if nextPlace == "" or nextPlace.color != color:
+            if nextPlace == "" or nextPlace[1] != color:
                 moveList.append((move[0]+x,move[1]+y))
     return moveList
 
@@ -230,7 +230,7 @@ def moveKing(board, x, y, color):
     for move in moves:
         if 7 >= x + move[0] >= 0 and 7 >= y + move[1] >= 0 :
             nextPlace = board[x + move[0],y + move[1]]
-            if nextPlace == "" or nextPlace.color != color:
+            if nextPlace == "" or nextPlace[1] != color:
                 moveList.append((move[0] + x, move[1] + y))
     return moveList
 
@@ -242,7 +242,7 @@ def moveRook(board, x, y, color):
         while 0 <= nx <= 7 and 0 <= ny <= 7:
             if board[nx, ny] == "":
                 moveList.append((nx, ny))
-            elif board[nx, ny].color != color:
+            elif board[nx, ny][1] != color:
                 moveList.append((nx, ny))
                 break
             else:  #same color piece blocking the way
@@ -263,7 +263,7 @@ def moveBishop(board, x, y, color):
         while 0 <= nx <= 7 and 0 <= ny <= 7:
             if board[nx, ny] == "":
                 moveList.append((nx, ny))
-            elif board[nx, ny].color != color:
+            elif board[nx, ny][1] != color:
                 moveList.append((nx, ny))
                 break
             else:  #same color piece blocking the way
