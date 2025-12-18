@@ -163,7 +163,7 @@ def movePawn(board, x, y, color, base_color):
 
 def moveKnight(board, x, y, color):
     moveList = []
-    moves = [(2,1),(-2,1),(2,-1),(-2,1),(1,2),(-1,2),(1,-2),(-1,-2)]
+    moves = [(2,1),(-2,1),(2,-1),(-2,-1),(1,2),(-1,2),(1,-2),(-1,-2)]
     for move in moves: 
         if 7 >= x + move[0] >= 0 and 7 >= y + move[1] >= 0 :
             nextPlace = board[x + move[0],y + move[1]] #CHANGED PIECE LOGIC, BENNO YOU WERENT CHECKInG LE BON MON REUF -> NOW NEXTPLACE = MOVE DESTINATION
