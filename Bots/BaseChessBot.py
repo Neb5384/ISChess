@@ -10,6 +10,7 @@
 #   Be careful with modules to import from the root (don't forget the Bots.)
 from Bots.ChessBotList import register_chess_bot
 import random
+import time
 #   Simply move the pawns forward and tries to capture as soon as possible
 def chess_bot(player_sequence, board, time_budget, **kwargs):
     pieces = ['p', 'n', 'b', 'r', 'q', 'K']
@@ -38,7 +39,10 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
     states = [head]
     n = 0
 
-    while n<2:
+    print(f"Time budget : {time_budget}") 
+
+    start_time = time.time()
+    while n<3:
         new_states = []
         n += 1
         for state in states:
@@ -48,27 +52,34 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
                 for y in range(board.shape[1]):
                     if board[x,y] != "":
                         piece = board[x,y]
-                        #TODO : CAN WE MAKE IT IN SWTICH CASE ? PYTHON IS BAD FOR CONCATENATION + SWITCH CASe
-                        if piece.color + piece.type == color + 'p' :
-                            moves = movePawn(board, x, y, color)
-                        elif piece.color + piece.type == color + 'n' :
-                            moves = moveKnight(board, x, y, color)
-                        elif piece.color + piece.type == color + 'b' :
-                            moves = moveBishop(board, x, y, color)
-                        elif piece.color + piece.type == color + 'r' :
-                            moves = moveRook(board, x, y, color)
-                        elif piece.color + piece.type == color + 'q' :
-                            moves = moveQueen(board, x, y, color)
-                        elif piece.color + piece.type == color + 'k' :
-                            moves = moveKing(board, x, y, color)
-                        else:
-                            continue
+
+                        match piece.color+piece.type:
+                            case p if p == color + 'p': 
+                                moves = movePawn(board, x, y, color)
+                            case kn if kn == color + 'n':
+                                moves = moveKnight(board, x, y, color)
+                            case b if b == color + 'b' :
+                                moves = moveBishop(board, x, y, color)
+                            case r if r == color + 'r' :
+                                moves = moveRook(board, x, y, color)
+                            case q if q == color + 'q' :
+                                moves = moveQueen(board, x, y, color)
+                            case k if k == color + 'k' :
+                                moves = moveKing(board, x, y, color)
+                            case _:
+                                continue
+
                         if len(moves) != 0:
                             for move in moves:
                                 all_moves.append([(x,y),move])
 
             #print(all_moves)
             for move in all_moves:
+                if state.board[move[1]] != '' and state.board[move[1]].color == swap(color):
+                    #print("BOUFFER"+str(move[0])+str( move[1]))
+                    print(board_to_string(state.board))
+                else:
+                    score_diff = 0
                 #print(move)
                 new_board = simulate_move(board, move[0][0], move[0][1], move[1][0], move[1][1])
                 #print(new_board)
@@ -76,48 +87,47 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
                 state.children.append(new_state)
                 new_states.append(new_state)
         states = new_states
-        print(color)
         color = swap(color)
-        print("TESTTTT")
+
+        print(f"depth : {n} - time : {time.time() - start_time}")
     print("number of possibilities calculated: " + str(len(states)))
 
     color = player_sequence[1]
     nextmove = calldfs(head, piece_values)
+    print(f"Dfs time : {time.time() - start_time}")
     return nextmove
 
 
 class State:
-    def __init__(self, board,color, children = [],move =[(),()]):
+    def __init__(self, board,color, children = [],move =[(),()], score=0):
         self.board = board
         self.children = children
         self.move = move
         self.color = color
-
+        self.score = score
 
 
 def calldfs(head,piece_values):
     def dfs(state):
 
         if len(state.children) == 0:
-            return [evaluate(state.board,state.color,piece_values)]
-        
+            return evaluate(state.board,state.color,piece_values)
+    
         values = []
         for child in state.children:
-            value = max(dfs(child))
-            values.append(-value)
-        print(str(state.color)+str(values))
-        return values
+            values.append(-dfs(child))
 
-    values = dfs(head)
-    move = [(),()]
+        #print(state.color,values)
+        return max(values)
+
     maxvalue = -10000
-    for i in range(len(values)):
-        if values[i] > maxvalue:
-            maxvalue = values[i]
-            move = head.children[i].move
-            print(str(maxvalue)+str(move))
-    print("estimated best: " +str(maxvalue))
-    print("nextmove" + str(move))
+    for child in head.children:
+        value = -dfs(child)
+        #print(value,child.move)
+        if value > maxvalue:
+            maxvalue = value
+            move = child.move
+    #print(maxvalue,move)
     return move
 
 def swap(color):
@@ -145,15 +155,41 @@ def simulate_move(board, x, y, nx, ny):
 
     return new_board
 
+
+def board_to_string(board):
+    """Return a human-readable string representation of the board.
+
+    Empty squares are shown as '.', pieces as '<type><color>' (e.g. 'pw' pawn white).
+    Rows are joined with newlines, columns separated by spaces.
+    """
+    lines = []
+    try:
+        rows, cols = board.shape[0], board.shape[1]
+    except Exception:
+        return str(board)
+
+    for x in range(rows):
+        row = []
+        for y in range(cols):
+            cell = board[x, y]
+            if cell == "" or cell is None:
+                row.append('.')
+            else:
+                # piece has attributes .type and .color
+                row.append(f"{cell.type}{cell.color}")
+        lines.append(' '.join(row))
+    return '\n'.join(lines)
+
 #PIECE VALID MOVEMENT 
 def movePawn(board, x, y, color):
     moveList = []
-    if board[x+1,y] == "":
-        moveList.append((x+1, y))
-    if y+1 <= 7 and (board[x+1,y+1] != "" and board[x+1,y+1].color != color):
-        moveList.append((x+1, y+1))
-    if y-1 >= 0 and (board[x+1,y-1] != "" and board[x+1,y-1].color != color):
-        moveList.append((x+1, y-1))
+    if x+1 <= 7:
+        if board[x+1,y] == "":
+            moveList.append((x+1, y))
+        if y+1 <= 7 and (board[x+1,y+1] != "" and board[x+1,y+1].color != color):
+            moveList.append((x+1, y+1))
+        if y-1 >= 0 and (board[x+1,y-1] != "" and board[x+1,y-1].color != color):
+            moveList.append((x+1, y-1))
     return moveList
 
 def moveKnight(board, x, y, color):
@@ -214,12 +250,7 @@ def moveBishop(board, x, y, color):
             nx += dx
             ny += dy
             #print("Bishop move added : " + str((nx, ny)))
-    """
-    for i in range(1, 7):
-        if x + i <= 7 and y + i <= 7:
-            if board[x + i, y + i] == "" or board[x + i, y + i].color != color:
-                moveList.append((x + i, y + i))
-    """
+
     return moveList
 
 def moveQueen(board,x,y,color):
