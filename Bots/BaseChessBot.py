@@ -139,9 +139,13 @@ def simulate_move(board, x, y, nx, ny):
     new_board = board.copy()
 
     piece = board[x,y]
+
     #print("simulating move on"+str(piece))
     new_board[x,y] = ""
-    new_board[nx,ny] = piece
+    if piece.type != "p":
+        new_board[nx,ny] = piece
+    else:
+        new_board[nx,ny] =
 
     return new_board
 
@@ -198,7 +202,6 @@ def moveRook(board, x, y, color):
             nx += dx
             ny += dy
             #print("Rook move added : " + str((nx, ny)))
-
     return moveList
 
 def moveBishop(board, x, y, color):
@@ -219,12 +222,6 @@ def moveBishop(board, x, y, color):
             nx += dx
             ny += dy
             #print("Bishop move added : " + str((nx, ny)))
-    """
-    for i in range(1, 7):
-        if x + i <= 7 and y + i <= 7:
-            if board[x + i, y + i] == "" or board[x + i, y + i].color != color:
-                moveList.append((x + i, y + i))
-    """
     return moveList
 
 def moveQueen(board,x,y,color):
