@@ -169,7 +169,7 @@ def simulate_move(board, x, y, nx, ny):
     if piece.type != "p":
         new_board[nx,ny] = piece
     else:
-        new_board[nx,ny] =
+        new_board[nx,ny] = 'q' + piece.color
 
     return new_board
 
