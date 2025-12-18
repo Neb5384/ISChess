@@ -10,6 +10,7 @@
 #   Be careful with modules to import from the root (don't forget the Bots.)
 from Bots.ChessBotList import register_chess_bot
 import random
+import time
 #   Simply move the pawns forward and tries to capture as soon as possible
 def chess_bot(player_sequence, board, time_budget, **kwargs):
     pieces = ['p', 'n', 'b', 'r', 'q', 'K']
@@ -17,6 +18,14 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
 
     color = player_sequence[1]
     base_color = color
+    piece_values_abs = {
+        "p" : 1,
+        "n" : 3,
+        "b" : 3,
+        "r" : 5,
+        "q" : 9,
+        "k" : 1000,
+    }
     piece_values = {
         "wp" : 1,
         "bp" : -1,
@@ -35,11 +44,14 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
     ev = evaluate(board,color,piece_values)
     print("evaluation : " + str(ev))
 
-    head =  State(board,color, [],[(),()])
+    head =  State(board,color, [],[(),()],0)
     states = [head]
     n = 0
 
-    while n<3:
+    print(f"Time budget : {time_budget}") 
+
+    start_time = time.time()
+    while n<4:
         new_states = []
         n += 1
         for state in states:
@@ -72,53 +84,65 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
 
             #print(all_moves)
             for move in all_moves:
+                base_score = state.score
+                if state.board[move[1]] != '' and state.board[move[1]].color != color:
+                    score_diff = piece_values_abs[state.board[move[1]].type]
+                    #print(board_to_string(state.board))
+                else:
+                    score_diff = 0
+                score = -base_score - score_diff
                 #print(move)
                 new_board = simulate_move(board, move[0][0], move[0][1], move[1][0], move[1][1])
                 #print(new_board)
-                new_state = State(new_board,swap(color), [],move)
+                new_state = State(new_board,swap(color), [],move,score)
+                #print(board_to_string(new_state.board))
+                #print(f"NEW SCORE : {str(score)}")
                 state.children.append(new_state)
                 new_states.append(new_state)
         states = new_states
         color = swap(color)
-        print(color)
+
+        print(f"depth : {n} - time : {time.time() - start_time}")
     print("number of possibilities calculated: " + str(len(states)))
 
     color = player_sequence[1]
     nextmove = calldfs(head, piece_values)
+    print(f"Dfs time : {time.time() - start_time}")
     return nextmove
 
 
 class State:
-    def __init__(self, board,color, children = [],move =[(),()]):
+    def __init__(self, board,color, children = [],move =[(),()], score=0):
         self.board = board
         self.children = children
         self.move = move
         self.color = color
+        self.score = score
 
 
-
-def calldfs(head,piece_values):
+def calldfs(head, piece_values):
     def dfs(state):
-
         if len(state.children) == 0:
-            return evaluate(state.board,state.color,piece_values)
-    
+            return state.score
+
         values = []
         for child in state.children:
             values.append(-dfs(child))
 
-        #print(state.color,values)
-        return max(values)
+        #print(state.color, values)
+        return max(values) 
 
     maxvalue = -10000
+
     for child in head.children:
         value = -dfs(child)
-        #print(value,child.move)
+        #print(value, child.move)
         if value > maxvalue:
             maxvalue = value
             move = child.move
-    #print(maxvalue,move)
+    #print(maxvalue, move)
     return move
+
 
 def swap(color):
     if color == "b": return "w"
@@ -148,6 +172,31 @@ def simulate_move(board, x, y, nx, ny):
         new_board[nx,ny] =
 
     return new_board
+
+
+def board_to_string(board):
+    """Return a human-readable string representation of the board.
+
+    Empty squares are shown as '.', pieces as '<type><color>' (e.g. 'pw' pawn white).
+    Rows are joined with newlines, columns separated by spaces.
+    """
+    lines = []
+    try:
+        rows, cols = board.shape[0], board.shape[1]
+    except Exception:
+        return str(board)
+
+    for x in range(rows):
+        row = []
+        for y in range(cols):
+            cell = board[x, y]
+            if cell == "" or cell is None:
+                row.append('.')
+            else:
+                # piece has attributes .type and .color
+                row.append(f"{cell.type}{cell.color}")
+        lines.append(' '.join(row))
+    return '\n'.join(lines)
 
 #PIECE VALID MOVEMENT 
 def movePawn(board, x, y, color, base_color):
@@ -222,6 +271,7 @@ def moveBishop(board, x, y, color):
             nx += dx
             ny += dy
             #print("Bishop move added : " + str((nx, ny)))
+
     return moveList
 
 def moveQueen(board,x,y,color):
