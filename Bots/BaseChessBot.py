@@ -51,7 +51,7 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
     print(f"Time budget : {time_budget}") 
 
     start_time = time.time()
-    while n<4:
+    while n<3:
         new_states = []
         n += 1
         for state in states:
