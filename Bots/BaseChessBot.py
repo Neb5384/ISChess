@@ -95,7 +95,7 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
                 #print(move)
                 new_board, promotion = simulate_move(board, move[0][0], move[0][1], move[1][0], move[1][1])
                 if promotion:
-                    score -= piece_values_abs["q"]
+                    score += piece_values_abs["q"]
                     
                 #print(new_board)
                 new_state = State(new_board,swap(color), [],move,score)
