@@ -12,10 +12,10 @@ from Bots.ChessBotList import register_chess_bot
 import random
 import time
 #   Simply move the pawns forward and tries to capture as soon as possible
+#TODO : PURGER CEUX QUI PUENT
 def chess_bot(player_sequence, board, time_budget, **kwargs):
     pieces = ['p', 'n', 'b', 'r', 'q', 'K']
     
-
     color = player_sequence[1]
     base_color = color
     piece_values_abs = {
@@ -51,7 +51,7 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
     print(f"Time budget : {time_budget}") 
 
     start_time = time.time()
-    while n<3:
+    while n<4 and time.time() - start_time < time_budget - 0.1:
         new_states = []
         n += 1
         for state in states:
@@ -103,10 +103,19 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
                 #print(f"NEW SCORE : {str(score)}")
                 state.children.append(new_state)
                 new_states.append(new_state)
+
+        '''
+        #*NEW :
+        # Après avoir rempli new_states
+        new_states.sort(key=lambda s: s.score, reverse=True)
+
+        MAX_STATES = 100
+        states = new_states[:MAX_STATES]
+        '''
         states = new_states
         color = swap(color)
 
-        print(f"depth : {n} - time : {time.time() - start_time}")
+        print(f"depth : {n} - nbr of states : " + str(len(states)) + f"- time : {time.time() - start_time}")
     print("number of possibilities calculated: " + str(len(states)))
 
     color = player_sequence[1]
@@ -116,7 +125,7 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
 
 
 class State:
-    def __init__(self, board,color, children = [],move =[(),()], score=0):
+    def __init__(self, board,color, children = None,move =[(),()], score=0):
         self.board = board
         self.children = children
         self.move = move
@@ -288,4 +297,4 @@ def moveQueen(board,x,y,color):
 
 
 
-register_chess_bot("A.L.P.H.A", chess_bot)
+register_chess_bot("A.L.P.H.A.", chess_bot)
