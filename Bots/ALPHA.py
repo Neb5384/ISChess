@@ -23,12 +23,20 @@ import time
 # - CLASSIFICATION DE L'ELO
 # - POWERPOINT
 
-def chess_bot(player_sequence, board, time_budget, **kwargs):
+def chess_bot(player_sequence, board, time_bud, **kwargs):
+    global start_time
+    start_time = time.time()
+    global TIME_MARGIN
     TIME_MARGIN = 0.2
+    global time_budget
+    time_budget = time_bud
+
     pieces = ['p', 'n', 'b', 'r', 'q', 'K']
     
     color = player_sequence[1]
+    global base_color
     base_color = color
+    global piece_values_abs
     piece_values_abs = {
         "p" : 1,
         "n" : 3,
@@ -37,6 +45,7 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
         "q" : 9,
         "k" : 1000,
     }
+    global piece_values
     piece_values = {
         "wp" : 1,
         "bp" : -1,
@@ -57,13 +66,48 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
 
     head =  State(board,color, [],[(),()],0)
     states = [head]
-    n = 0
 
     print(f"Time budget : {time_budget}") 
 
-    start_time = time.time()
-    depth = 4
+    color = player_sequence[1]
 
+
+    depth = 3
+
+    do_bfs(depth)
+
+    call_dfs_prune(head,depth)
+
+
+    nextmove = calldfs(head)
+
+    print(f"Dfs time : {time.time() - start_time}")
+    return nextmove
+
+
+
+
+
+
+
+
+
+
+
+class TimeOut(Exception):
+    pass
+
+
+class State:
+    def __init__(self, board,color, children = None,move =[(),()], score=0):
+        self.board = board
+        self.children = children
+        self.move = move
+        self.color = color
+        self.score = score
+
+def do_bfs(depth):
+    n = 0
     while n < depth:
         try:
         
@@ -142,24 +186,38 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
         n += 1
 
         print(f"depth : {n} - nbr of states : " + str(len(states)) + f"- time : {time.time() - start_time}")
+
     print("number of possibilities calculated: " + str(len(states)))
 
-    color = player_sequence[1]
-    nextmove = calldfs(head, n)
-    print(f"Dfs time : {time.time() - start_time}")
-    return nextmove
 
-class TimeOut(Exception):
-    pass
+def call_dfs_prune(head,depth):
+    def dfs_prune(state,current_depth,depth):
+        if current_depth == depth:
+            print("ASDGASDGUASDGZGU")
+            return state.score < 0
+        elif (depth + current_depth) %2 == 1:
+            should_prune = True
+            for child in state.children:
+                prune = dfs_prune(child,current_depth+1,depth)
+                if not prune:
+                    should_prune = False
+            return should_prune
+        else:
+            should_prune = False
+            new_children = []
+            for child in state.children:
+                prune = dfs_prune(child,current_depth+1,depth)
+                if prune:
+                    should_prune = True
+                    print("pruned this mf")
+                else: 
+                    new_children.append(child)
+            state.children = new_children
+            return should_prune
 
+    current_depth = 0
+    dfs_prune(head,current_depth,depth)
 
-class State:
-    def __init__(self, board,color, children = None,move =[(),()], score=0):
-        self.board = board
-        self.children = children
-        self.move = move
-        self.color = color
-        self.score = score
 
 
 def calldfs(head, maxdepth):
