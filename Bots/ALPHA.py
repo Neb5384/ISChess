@@ -59,6 +59,7 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     print("evaluation : " + str(ev))
 
     head =  State(board,color, [],[(),()],0)
+    global states
     states = [head]
 
     print(f"Time budget : {time_budget}") 
@@ -68,6 +69,8 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     depth = 3
 
     def do_bfs(depth):
+        global states
+        nonlocal color
         n = 0
         while n < depth:
             try:
@@ -144,35 +147,37 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
 
     def call_dfs_prune(head,depth):
         print("WAITAMINIT")
+        global pruned
         pruned = 0
         def dfs_prune(state,current_depth,depth):
+            global pruned
             if current_depth == depth:
                 return state.score < 0
             elif (depth + current_depth) %2 == 1:
+                new_children = []
                 should_prune = True
                 for child in state.children:
                     prune = dfs_prune(child,current_depth+1,depth)
                     if not prune:
                         should_prune = False
+                        new_children.append(child)
+                    else:
+                        pruned += 1    
+                state.children = new_children
                 return should_prune
             else:
                 should_prune = False
-                new_children = []
                 for child in state.children:
                     prune = dfs_prune(child,current_depth+1,depth)
                     if prune:
                         should_prune = True
-                        pruned += 1
-                        #print("pruned this mf")
-                    else: 
-                        new_children.append(child)
-                state.children = new_children
                 return should_prune
 
-        print(f"Nbr of mf that are fucking pruned : {pruned} mf pruned")
 
         current_depth = 0
         dfs_prune(head,current_depth,depth)
+        print(f"Nbr of mf that are fucking pruned : {pruned} mf pruned")
+
 
     do_bfs(depth)
 
