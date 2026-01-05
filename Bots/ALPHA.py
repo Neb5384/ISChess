@@ -8,7 +8,7 @@
 #
 
 #   Be careful with modules to import from the root (don't forget the Bots.)
-from Bots.ChessBotList import register_chess_lculatebot
+from Bots.ChessBotList import register_chess_bot
 import random
 import time
 #   Simply move the pawns forward and tries to capture as soon as possible
@@ -27,10 +27,6 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     start_time = time.time()
     TIME_MARGIN = 0.2
     time_budget = time_bud
-
-
-
-    
 
     pieces = ['p', 'n', 'b', 'r', 'q', 'K']
     
