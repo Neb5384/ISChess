@@ -82,6 +82,7 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
 
 
     nextmove = calldfs(head)
+    print("apres_dfs")
 
     print(f"Dfs time : {time.time() - start_time}")
     return nextmove
