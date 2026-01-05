@@ -23,12 +23,20 @@ import time
 # - CLASSIFICATION DE L'ELO
 # - POWERPOINT
 
-def chess_bot(player_sequence, board, time_budget, **kwargs):
+def chess_bot(player_sequence, board, time_bud, **kwargs):
+    global start_time
+    start_time = time.time()
+    global TIME_MARGIN
     TIME_MARGIN = 0.2
+    global time_budget
+    time_budget = time_bud
+
     pieces = ['p', 'n', 'b', 'r', 'q', 'K']
     
     color = player_sequence[1]
+    global base_color
     base_color = color
+    global piece_values_abs
     piece_values_abs = {
         "p" : 1,
         "n" : 3,
@@ -37,6 +45,7 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
         "q" : 9,
         "k" : 1000,
     }
+    global piece_values
     piece_values = {
         "wp" : 1,
         "bp" : -1,
@@ -57,14 +66,49 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
 
     head =  State(board,color, [],[(),()],0)
     states = [head]
-    n = 0
 
     print(f"Time budget : {time_budget}") 
 
-    start_time = time.time()
-    depth = 4
+    color = player_sequence[1]
 
-    while True:
+
+    depth = 3
+
+    do_bfs(depth)
+
+    call_dfs_prune(head,depth)
+
+
+    nextmove = calldfs(head)
+
+    print(f"Dfs time : {time.time() - start_time}")
+    return nextmove
+
+
+
+
+
+
+
+
+
+
+
+class TimeOut(Exception):
+    pass
+
+
+class State:
+    def __init__(self, board,color, children = None,move =[(),()], score=0):
+        self.board = board
+        self.children = children
+        self.move = move
+        self.color = color
+        self.score = score
+
+def do_bfs(depth):
+    n = 0
+    while n < depth:
         try:
             new_states = []
             for state in states:
@@ -141,6 +185,7 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
         n += 1
 
         print(f"depth : {n} - nbr of states : " + str(len(states)) + f"- time : {time.time() - start_time}")
+
     print("number of possibilities calculated: " + str(len(states)))
 
     color = player_sequence[1]
@@ -160,8 +205,6 @@ class State:
         self.color = color
         self.score = score
 
-def calldfs_prun():
-    pass
 
 def calldfs(head, maxdepth):
     def dfs(state,maxdepth):
