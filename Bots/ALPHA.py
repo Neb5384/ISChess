@@ -64,9 +64,8 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
     start_time = time.time()
     depth = 4
 
-    while n < depth:
+    while True:
         try:
-        
             new_states = []
             for state in states:
                 all_moves=[]
