@@ -160,6 +160,8 @@ class State:
         self.color = color
         self.score = score
 
+def calldfs_prun():
+    pass
 
 def calldfs(head, maxdepth):
     def dfs(state,maxdepth):
