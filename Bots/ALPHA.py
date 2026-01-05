@@ -76,7 +76,9 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
 
     do_bfs(depth)
 
+    print("appelmnigga")
     call_dfs_prune(head,depth)
+    print("sortiedefonction")
 
 
     nextmove = calldfs(head)
@@ -191,6 +193,7 @@ def do_bfs(depth):
 
 
 def call_dfs_prune(head,depth):
+    print("WAITAMINIT")
     def dfs_prune(state,current_depth,depth):
         if current_depth == depth:
             print("ASDGASDGUASDGZGU")
