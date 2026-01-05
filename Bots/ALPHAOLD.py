@@ -68,6 +68,7 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
         try:
         
             new_states = []
+            n += 1
             for state in states:
                 all_moves=[]
                 board = state.board
@@ -139,13 +140,12 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
         '''
         states = new_states
         color = swap(color)
-        n += 1
 
         print(f"depth : {n} - nbr of states : " + str(len(states)) + f"- time : {time.time() - start_time}")
     print("number of possibilities calculated: " + str(len(states)))
 
     color = player_sequence[1]
-    nextmove = calldfs(head, n)
+    nextmove = calldfs(head, piece_values)
     print(f"Dfs time : {time.time() - start_time}")
     return nextmove
 
@@ -162,23 +162,22 @@ class State:
         self.score = score
 
 
-def calldfs(head, maxdepth):
-    def dfs(state,maxdepth):
-        if maxdepth > 0:
-            values = []
-            for child in state.children:
-                values.append(-dfs(child,maxdepth-1))
-
-            #print(state[1], values)
-            return max(values) 
-        else:
+def calldfs(head, piece_values):
+    def dfs(state):
+        if len(state.children) == 0:
             return state.score
 
+        values = []
+        for child in state.children:
+            values.append(-dfs(child))
+
+        #print(state[1], values)
+        return max(values) 
 
     maxvalue = -10000
 
     for child in head.children:
-        value = -dfs(child,maxdepth-1)
+        value = -dfs(child)
         #print(value, child.move)
         if value > maxvalue:
             maxvalue = value
