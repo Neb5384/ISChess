@@ -24,19 +24,14 @@ import time
 # - POWERPOINT
 
 def chess_bot(player_sequence, board, time_bud, **kwargs):
-    global start_time
     start_time = time.time()
-    global TIME_MARGIN
     TIME_MARGIN = 0.2
-    global time_budget
     time_budget = time_bud
 
     pieces = ['p', 'n', 'b', 'r', 'q', 'K']
     
     color = player_sequence[1]
-    global base_color
     base_color = color
-    global piece_values_abs
     piece_values_abs = {
         "p" : 1,
         "n" : 3,
@@ -45,7 +40,6 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
         "q" : 9,
         "k" : 1000,
     }
-    global piece_values
     piece_values = {
         "wp" : 1,
         "bp" : -1,
@@ -71,31 +65,123 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
 
     color = player_sequence[1]
 
-
     depth = 3
+
+    def do_bfs(depth):
+        n = 0
+        while n < depth:
+            try:
+                new_states = []
+                for state in states:
+                    all_moves=[]
+                    board = state.board
+                    for x in range(board.shape[0]):
+                        if time.time() - start_time > time_budget - TIME_MARGIN:
+                                raise TimeOut()
+                        for y in range(board.shape[1]):
+                            if board[x,y] != "":
+                                piece = board[x,y]
+
+                                match piece[1]+piece[0]:
+                                    case p if p == color + 'p': 
+                                        moves = movePawn(board, x, y, color,base_color)
+                                    case kn if kn == color + 'n':
+                                        moves = moveKnight(board, x, y, color)
+                                    case b if b == color + 'b' :
+                                        moves = moveBishop(board, x, y, color)
+                                    case r if r == color + 'r' :
+                                        moves = moveRook(board, x, y, color)
+                                    case q if q == color + 'q' :
+                                        moves = moveQueen(board, x, y, color)
+                                    case k if k == color + 'k' :
+                                        moves = moveKing(board, x, y, color)
+                                    case _:
+                                        continue
+
+                                if len(moves) != 0:
+                                    for move in moves:
+                                        all_moves.append([(x,y),move])
+                    #print(all_moves)
+                    for move in all_moves:
+                        base_score = state.score
+                        if state.board[move[1]] != '' and state.board[move[1]][1] != color:
+                            score_diff = piece_values_abs[state.board[move[1]][0]]
+                            #print(board_to_string(state.board))
+                        else:
+                            score_diff = 0
+                        if piece[0] == "p" and (move[1][0] == 0 or move[1][0] == 7):
+                            score -= (piece_values_abs["q"] - piece_values_abs["p"])
+
+                        score = -base_score - score_diff
+
+                        #print(move)
+                        if n != depth:
+                            new_board = simulate_move(board, move[0][0], move[0][1], move[1][0], move[1][1])
+                            
+                            #print(new_board)
+                            new_state = State(new_board,swap(color), [],move,score)
+
+                        else:
+                            new_state = State(None,swap(color), [],move,score)
+
+                        #print(board_to_string(new_state.board))
+                        #print(f"NEW SCORE : {str(score)}")
+                        state.children.append(new_state)
+                        new_states.append(new_state)
+
+
+            except TimeOut:
+                print("TIMEOUT")
+                break
+
+            states = new_states
+            color = swap(color)
+            n += 1
+
+            print(f"depth : {n} - nbr of states : " + str(len(states)) + f"- time : {time.time() - start_time}")
+
+        print("number of possibilities cad: " + str(len(states)))
+
+    def call_dfs_prune(head,depth):
+        print("WAITAMINIT")
+        pruned = 0
+        def dfs_prune(state,current_depth,depth):
+            if current_depth == depth:
+                return state.score < 0
+            elif (depth + current_depth) %2 == 1:
+                should_prune = True
+                for child in state.children:
+                    prune = dfs_prune(child,current_depth+1,depth)
+                    if not prune:
+                        should_prune = False
+                return should_prune
+            else:
+                should_prune = False
+                new_children = []
+                for child in state.children:
+                    prune = dfs_prune(child,current_depth+1,depth)
+                    if prune:
+                        should_prune = True
+                        pruned += 1
+                        #print("pruned this mf")
+                    else: 
+                        new_children.append(child)
+                state.children = new_children
+                return should_prune
+
+        print(f"Nbr of mf that are fucking pruned : {pruned} mf pruned")
+
+        current_depth = 0
+        dfs_prune(head,current_depth,depth)
 
     do_bfs(depth)
 
-    print("appelmnigga")
     call_dfs_prune(head,depth)
-    print("sortiedefonction")
 
-
-    nextmove = calldfs(head)
-    print("apres_dfs")
+    nextmove = calldfs(head, depth)
 
     print(f"Dfs time : {time.time() - start_time}")
     return nextmove
-
-
-
-
-
-
-
-
-
-
 
 class TimeOut(Exception):
     pass
@@ -109,118 +195,8 @@ class State:
         self.color = color
         self.score = score
 
-def do_bfs(depth):
-    n = 0
-    while n < depth:
-        try:
-        
-            new_states = []
-            for state in states:
-                all_moves=[]
-                board = state.board
-                for x in range(board.shape[0]):
-                    if time.time() - start_time > time_budget - TIME_MARGIN:
-                            raise TimeOut()
-                    for y in range(board.shape[1]):
-                        if board[x,y] != "":
-                            piece = board[x,y]
-
-                            match piece[1]+piece[0]:
-                                case p if p == color + 'p': 
-                                    moves = movePawn(board, x, y, color,base_color)
-                                case kn if kn == color + 'n':
-                                    moves = moveKnight(board, x, y, color)
-                                case b if b == color + 'b' :
-                                    moves = moveBishop(board, x, y, color)
-                                case r if r == color + 'r' :
-                                    moves = moveRook(board, x, y, color)
-                                case q if q == color + 'q' :
-                                    moves = moveQueen(board, x, y, color)
-                                case k if k == color + 'k' :
-                                    moves = moveKing(board, x, y, color)
-                                case _:
-                                    continue
-
-                            if len(moves) != 0:
-                                for move in moves:
-                                    all_moves.append([(x,y),move])
-                #print(all_moves)
-                for move in all_moves:
-                    base_score = state.score
-                    if state.board[move[1]] != '' and state.board[move[1]][1] != color:
-                        score_diff = piece_values_abs[state.board[move[1]][0]]
-                        #print(board_to_string(state.board))
-                    else:
-                        score_diff = 0
-                    if piece[0] == "p" and (move[1][0] == 0 or move[1][0] == 7):
-                        score -= (piece_values_abs["q"] - piece_values_abs["p"])
-
-                    score = -base_score - score_diff
-
-                    #print(move)
-                    if n != depth:
-                        new_board = simulate_move(board, move[0][0], move[0][1], move[1][0], move[1][1])
-                        
-                        #print(new_board)
-                        new_state = State(new_board,swap(color), [],move,score)
-
-                    else:
-                        new_state = State(None,swap(color), [],move,score)
-
-                    #print(board_to_string(new_state.board))
-                    #print(f"NEW SCORE : {str(score)}")
-                    state.children.append(new_state)
-                    new_states.append(new_state)
 
 
-        except TimeOut:
-            print("TIMEOUT")
-            break
-
-            
-        '''
-        new_states.sort(key=lambda s: s.score, reverse=True)
-
-        MAX_STATES = 100
-        states = new_states[:MAX_STATES]
-        '''
-        states = new_states
-        color = swap(color)
-        n += 1
-
-        print(f"depth : {n} - nbr of states : " + str(len(states)) + f"- time : {time.time() - start_time}")
-
-    print("number of possibilities calculated: " + str(len(states)))
-
-
-def call_dfs_prune(head,depth):
-    print("WAITAMINIT")
-    def dfs_prune(state,current_depth,depth):
-        if current_depth == depth:
-            print("ASDGASDGUASDGZGU")
-            return state.score < 0
-        elif (depth + current_depth) %2 == 1:
-            should_prune = True
-            for child in state.children:
-                prune = dfs_prune(child,current_depth+1,depth)
-                if not prune:
-                    should_prune = False
-            return should_prune
-        else:
-            should_prune = False
-            new_children = []
-            for child in state.children:
-                prune = dfs_prune(child,current_depth+1,depth)
-                if prune:
-                    should_prune = True
-                    print("pruned this mf")
-                else: 
-                    new_children.append(child)
-            state.children = new_children
-            return should_prune
-
-    current_depth = 0
-    dfs_prune(head,current_depth,depth)
 
 
 
