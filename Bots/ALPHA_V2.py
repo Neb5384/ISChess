@@ -196,6 +196,7 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
     return best_score, bestmovelist
 
 
+
 def generate_moves(board, color, base_color):
     moves = []
     for x in range(8):
