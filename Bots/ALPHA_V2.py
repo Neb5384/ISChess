@@ -54,8 +54,9 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     start_time = time.time()
     global time_margin
     time_margin = 0.2
-    depth = 5
-    max_depth = depth
+    depth = 3
+    global max_depth
+    max_depth = 3
     time_budget = time_bud
 
     global color
@@ -65,12 +66,11 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     color = player_sequence[1]
 
     base_color = color
+    best_score = 0
     best_move = None
-    evaluation = 0
 
     try:
             score, moveList = negamax(
-                evaluation,
                 board,
                 depth,
                 max_depth,
@@ -83,21 +83,21 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
             )
             if moveList is not []:
                 best_move = moveList[0]
+                best_score = score
     except TimeOut:
         pass
-    
+
 
     #print(f"best move : {move[0]} to {move[1]}, score = {best_score}")
     print(f"best moves : {moveList}")
-    print(f"Total time : {time.time() - start_time}, depth : {max_depth}")
-    if len(moveList) == 1:
-        return moveList[0]
+    print(f"depth : {depth} - time : {time.time() - start_time}")
+
     return best_move
 
 class TimeOut(Exception):
     pass
 
-def negamax(evaluation,board, depth, max_depth, alpha, beta, color, base_color, start_time, time_budget):
+def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time, time_budget):
     if time.time() - start_time > time_budget - time_margin:
         raise TimeOut()
 
@@ -120,7 +120,7 @@ def negamax(evaluation,board, depth, max_depth, alpha, beta, color, base_color, 
     '''
 
     if depth == 0:
-        return evaluation, []
+        return evaluate(board, color), None
 
     best_score = -math.inf
     best_move = None
@@ -144,7 +144,7 @@ def negamax(evaluation,board, depth, max_depth, alpha, beta, color, base_color, 
 
         #promotion
         if piece[0] == "p" and (dst[0] == 0 or dst[0] == 7):
-            score += piece_values_abs["q"] - piece_values_abs["p"]
+            score += piece_values_abs[4] - piece_values_abs[0]
 
         return score
 
@@ -152,10 +152,8 @@ def negamax(evaluation,board, depth, max_depth, alpha, beta, color, base_color, 
 
     bestmovelist = []
     for move in moves:
-        evaluation = evaluation + move_score(move)
         new_board = simulate_move(board, *move[0], *move[1])
         score, _ = negamax(
-            evaluation,
             new_board,
             depth - 1,
             max_depth,
@@ -172,32 +170,30 @@ def negamax(evaluation,board, depth, max_depth, alpha, beta, color, base_color, 
                 bestmovelist.append(move)
                 #print(f"{move} ADDED TO THE LIST")
 
-                if score > best_score:
-                    best_score = score
-                    bestmovelist.clear()
-                    #print(f"MOVELIST CLEARED")
-
-                    bestmovelist.append(move)
-                    #print(f"{move} ADDED TO THE LIST")
             if score > best_score:
                 best_score = score
+                bestmovelist.clear()
+                #print(f"MOVELIST CLEARED")
 
-            alpha = max(alpha, score)
-            if alpha >= beta:
-                break
+                bestmovelist.append(move)
+                #print(f"{move} ADDED TO THE LIST")
+        if score > best_score:
+            best_score = score
 
-        '''
-            flag = "EXACT"
-        if best_score <= alpha_orig:
-            flag = "UPPER"
-        elif best_score >= beta:
-            flag = "LOWER"
+        alpha = max(alpha, score)
+        if alpha >= beta:
+            break
 
-        TT[key] = (depth, best_score, flag)
-        '''
-    except TimeOut:
-        print("TIMEOUT")
-        pass
+    '''
+        flag = "EXACT"
+    if best_score <= alpha_orig:
+        flag = "UPPER"
+    elif best_score >= beta:
+        flag = "LOWER"
+
+    TT[key] = (depth, best_score, flag)
+    '''
+
 
 
     return best_score, bestmovelist
