@@ -54,9 +54,8 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     start_time = time.time()
     global time_margin
     time_margin = 0.2
-    depth = 3
-    global max_depth
-    max_depth = 3
+    depth = 5
+    max_depth = depth
     time_budget = time_bud
 
     global color
@@ -66,12 +65,12 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     color = player_sequence[1]
 
     base_color = color
-    best_score = 0
     best_move = None
-
+    evaluation = 0
 
     try:
             score, moveList = negamax(
+                evaluation,
                 board,
                 depth,
                 max_depth,
@@ -84,7 +83,6 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
             )
             if moveList is not []:
                 best_move = moveList[0]
-                best_score = score
     except TimeOut:
         pass
     
@@ -100,7 +98,7 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
 class TimeOut(Exception):
     pass
 
-def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time, time_budget):
+def negamax(evaluation,board, depth, max_depth, alpha, beta, color, base_color, start_time, time_budget):
     if time.time() - start_time > time_budget - time_margin:
         raise TimeOut()
 
@@ -123,7 +121,7 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
     '''
 
     if depth == 0:
-        return evaluate(board, color), None
+        return evaluation, []
 
     best_score = -math.inf
     best_move = None
@@ -147,7 +145,7 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
 
         #promotion
         if piece[0] == "p" and (dst[0] == 0 or dst[0] == 7):
-            score += piece_values_abs[4] - piece_values_abs[0]
+            score += piece_values_abs["q"] - piece_values_abs["p"]
 
         return score
 
@@ -155,8 +153,10 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
 
     bestmovelist = []
     for move in moves:
+        evaluation = evaluation + move_score(move)
         new_board = simulate_move(board, *move[0], *move[1])
         score, _ = negamax(
+            evaluation,
             new_board,
             depth - 1,
             max_depth,
