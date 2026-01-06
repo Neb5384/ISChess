@@ -131,17 +131,12 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
     def move_score(move):
         src, dst = move
         piece = board[src]
-
         score = 0
 
         if board[dst] != "":
             captured = board[dst][0]
-            
-            #to be sure he capture de king DIRECTLY
-            if captured == "k":
-                return 10000
-            #other pieces captured
-            score += piece_values_abs[captured]
+
+            score = piece_values_abs[captured]
 
         #promotion
         if piece[0] == "p" and (dst[0] == 0 or dst[0] == 7):
