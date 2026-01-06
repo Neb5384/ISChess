@@ -1,4 +1,3 @@
-
 #
 #   Example function to be implemented for
 #       Single important function is next_best
@@ -29,7 +28,7 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     time_budget = time_bud
 
     pieces = ['p', 'n', 'b', 'r', 'q', 'K']
-    
+    global color
     color = player_sequence[1]
     base_color = color
     piece_values_abs = {
@@ -70,7 +69,7 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
 
     def do_bfs(depth):
         global states
-        nonlocal color
+        global color
         n = 0
         while n < depth:
             try:
@@ -145,6 +144,76 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
 
         print("number of possibilities cad: " + str(len(states)))
 
+    def add_depth_dfs(head,depth):
+        def dfs_recursive(state,current_depth,depth):
+            global color
+            if current_depth == depth:
+                    all_moves=[]
+                    board = state.board
+                    for x in range(board.shape[0]):
+                        #if time.time() - start_time > time_budget - TIME_MARGIN:
+                        #        raise TimeOut()
+                        for y in range(board.shape[1]):
+                            if board[x,y] != "":
+                                piece = board[x,y]
+
+                                match piece[1]+piece[0]:
+                                    case p if p == color + 'p': 
+                                        moves = movePawn(board, x, y, color,base_color)
+                                    case kn if kn == color + 'n':
+                                        moves = moveKnight(board, x, y, color)
+                                    case b if b == color + 'b' :
+                                        moves = moveBishop(board, x, y, color)
+                                    case r if r == color + 'r' :
+                                        moves = moveRook(board, x, y, color)
+                                    case q if q == color + 'q' :
+                                        moves = moveQueen(board, x, y, color)
+                                    case k if k == color + 'k' :
+                                        moves = moveKing(board, x, y, color)
+                                    case _:
+                                        continue
+
+                                if len(moves) != 0:
+                                    for move in moves:
+                                        all_moves.append([(x,y),move])
+                    #print(all_moves)
+                    for move in all_moves:
+                        base_score = state.score
+                        if state.board[move[1]] != '' and state.board[move[1]][1] != color:
+                            score_diff = piece_values_abs[state.board[move[1]][0]]
+                            #print(board_to_string(state.board))
+                        else:
+                            score_diff = 0
+                        if piece[0] == "p" and (move[1][0] == 0 or move[1][0] == 7):
+                            score -= (piece_values_abs["q"] - piece_values_abs["p"])
+
+                        score = -base_score - score_diff
+
+                        #print(move)
+                        if current_depth != depth:
+                            new_board = simulate_move(board, move[0][0], move[0][1], move[1][0], move[1][1])
+                            
+                            #print(new_board)
+                            new_state = State(new_board,swap(color), [],move,score)
+
+                        else:
+                            new_state = State(None,swap(color), [],move,score)
+
+                        #print(board_to_string(new_state.board))
+                        #print(f"NEW SCORE : {str(score)}")
+                        state.children.append(new_state)
+                    color = swap(color)
+
+                    print(f"depth : {depth} - nbr of states : " + str(len(states)) + f"- time : {time.time() - start_time}")
+
+            else:
+                for child in state.children:
+                    dfs_recursive(child,current_depth+1,depth)
+
+
+        current_depth = 0
+        dfs_recursive(head,current_depth,depth)
+
     def call_dfs_prune(head,depth):
         print("WAITAMINIT")
         global pruned
@@ -180,8 +249,16 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
 
 
     do_bfs(depth)
-
-    call_dfs_prune(head,depth)
+    while True :
+        try:
+            if time.time() - start_time > time_budget - TIME_MARGIN:
+                raise TimeOut() 
+            call_dfs_prune(head,depth)
+            add_depth_dfs(head,depth)
+        except TimeOut():
+            print("TimeOut")
+            break
+        
 
     nextmove = calldfs(head, depth)
 
@@ -199,10 +276,6 @@ class State:
         self.move = move
         self.color = color
         self.score = score
-
-
-
-
 
 
 def calldfs(head, maxdepth):
@@ -368,4 +441,4 @@ def moveQueen(board,x,y,color):
 
 
 
-register_chess_bot("ALPHA", chess_bot)
+register_chess_bot("ALPHA_OLD", chess_bot)

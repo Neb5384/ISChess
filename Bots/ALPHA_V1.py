@@ -16,7 +16,7 @@ import time
 # - PURGER CEUX QUI PUENT
 # - MOVES DU DEBUT (BEST MOVES)
 # - DEUXIEME NOTATION POUR LES CAS D'EGALITE (P.E : AVANCER PIECE = MIEUX, SI RIEN; RANDOM)
-# - SELECTION D'UN BON MOVE SI PLUIS DE TEMPS
+# - SELECTION D'UN BON MOVE SI PLUIS DE TEMPS -
 # - EVITER LES MOVES REPETITIFS
 # - TROUVER BEST MOVE EN MEME TEMPS QUE LA CREATION DU GRAPHE ? OU TRIER MIEUX LA LSITE DES MOVES POUR AVOIR LES MEILLEURS EN PREMIER ?
 # - TEST SUR PLUSIEURS BOARDS FIXES
@@ -62,11 +62,10 @@ def chess_bot(player_sequence, board, time_budget, **kwargs):
     print(f"Time budget : {time_budget}") 
 
     start_time = time.time()
-    depth = 4
+    depth = 10
 
     while n < depth:
         try:
-        
             new_states = []
             n += 1
             for state in states:
@@ -324,4 +323,5 @@ def moveQueen(board,x,y,color):
 
 
 
-register_chess_bot("ALPHA", chess_bot)
+register_chess_bot("ALPHAOLD_V1", chess_bot)
+

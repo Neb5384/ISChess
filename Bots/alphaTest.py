@@ -13,7 +13,7 @@ import random
 import time
 #   Simply move the pawns forward and tries to capture as soon as possible
 #TODO : PURGER CEUX QUI PUENT
-INF = 10_000
+INF = 10000
 nodes = 0
 
 TT = {}
@@ -63,6 +63,7 @@ def ordered_moves(board, x, y, color, base_color):
         target = board[nx, ny]
 
         # captures prioritaires
+        
         if target != "":
             score += piece_values_abs[target[0]] * 10
 
