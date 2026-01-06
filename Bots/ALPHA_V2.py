@@ -54,9 +54,9 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     start_time = time.time()
     global time_margin
     time_margin = 0.2
-    depth = 3
+    depth = 4
     global max_depth
-    max_depth = 3
+    max_depth = 4
     time_budget = time_bud
 
     global color
@@ -68,7 +68,6 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     base_color = color
     best_score = 0
     best_move = None
-
 
     try:
             score, moveList = negamax(
@@ -87,7 +86,6 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
                 best_score = score
     except TimeOut:
         pass
-    
     
 
     #print(f"best move : {move[0]} to {move[1]}, score = {best_score}")
@@ -147,56 +145,59 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
 
         #promotion
         if piece[0] == "p" and (dst[0] == 0 or dst[0] == 7):
-            score += piece_values_abs[4] - piece_values_abs[0]
+            score += piece_values_abs["q"] - piece_values_abs["p"]
 
         return score
 
     moves.sort(key=move_score, reverse=True)
 
     bestmovelist = []
-    for move in moves:
-        new_board = simulate_move(board, *move[0], *move[1])
-        score, _ = negamax(
-            new_board,
-            depth - 1,
-            max_depth,
-            -beta,
-            -alpha,
-            swap(color),
-            base_color,
-            start_time,
-            time_budget
-        )
-        score = -score
-        if depth == max_depth :
-            if score == best_score:
-                bestmovelist.append(move)
-                #print(f"{move} ADDED TO THE LIST")
+    try:
+        for move in moves:
+            new_board = simulate_move(board, *move[0], *move[1])
+            score, _ = negamax(
+                new_board,
+                depth - 1,
+                max_depth,
+                -beta,
+                -alpha,
+                swap(color),
+                base_color,
+                start_time,
+                time_budget
+            )
+            score = -score
+            if depth == max_depth :
+                if score == best_score:
+                    bestmovelist.append(move)
+                    #print(f"{move} ADDED TO THE LIST")
 
+                if score > best_score:
+                    best_score = score
+                    bestmovelist.clear()
+                    #print(f"MOVELIST CLEARED")
+
+                    bestmovelist.append(move)
+                    #print(f"{move} ADDED TO THE LIST")
             if score > best_score:
                 best_score = score
-                bestmovelist.clear()
-                #print(f"MOVELIST CLEARED")
 
-                bestmovelist.append(move)
-                #print(f"{move} ADDED TO THE LIST")
-        if score > best_score:
-            best_score = score
+            alpha = max(alpha, score)
+            if alpha >= beta:
+                break
 
-        alpha = max(alpha, score)
-        if alpha >= beta:
-            break
+        '''
+            flag = "EXACT"
+        if best_score <= alpha_orig:
+            flag = "UPPER"
+        elif best_score >= beta:
+            flag = "LOWER"
 
-    '''
-        flag = "EXACT"
-    if best_score <= alpha_orig:
-        flag = "UPPER"
-    elif best_score >= beta:
-        flag = "LOWER"
-
-    TT[key] = (depth, best_score, flag)
-    '''
-
+        TT[key] = (depth, best_score, flag)
+        '''
+    except TimeOut:
+        print("TIMEOUT")
+        pass
 
 
     return best_score, bestmovelist
