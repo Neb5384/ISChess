@@ -14,7 +14,6 @@ import math
 #   Simply move the pawns forward and tries to capture as soon as possible
 #TODO : 
 # - MOVES DU DEBUT (BEST MOVES)
-# - SELECTION D'UN BON MOVE SI PLUIS DE TEMPS
 # - EVITER LES MOVES REPETITIFS
 # - TRANSPOSITION TABLE -> GARDER EN CACHE LES COUPS ET LEUR EVALUATION
 # - TEST SUR PLUSIEURS BOARDS FIXES
@@ -53,10 +52,9 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     print("ALPHAV356 =====")
     start_time = time.time()
     global time_margin
-    time_margin = 0.2
-    depth = 3
-    global max_depth
-    max_depth = 3
+    time_margin = 0.15
+    depth = 5
+    max_depth = depth
     time_budget = time_bud
 
     global color
@@ -66,15 +64,16 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     color = player_sequence[1]
 
     base_color = color
-    best_score = 0
     best_move = None
 
 
+    #TODO : garder best moves if further depth are not possible
     try:
+        for depth in range(1, max_depth + 1):
             score, moveList = negamax(
                 board,
                 depth,
-                max_depth,
+                depth,
                 -math.inf,
                 math.inf,
                 color,
@@ -83,17 +82,20 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
                 time_bud,
                 current_eval=0
             )
-            if moveList is not []:
+            if moveList != []:
                 best_move = moveList[0]
-                best_score = score
+                #print(f"best move : {best_move}")
     except TimeOut:
+        max_depth -= 1
         pass
-
+    
+    
 
     #print(f"best move : {move[0]} to {move[1]}, score = {best_score}")
     print(f"best moves : {moveList}")
-    print(f"depth : {depth} - time : {time.time() - start_time}")
-
+    print(f"Total time : {time.time() - start_time}, depth : {max_depth}")
+    if len(moveList) == 1:
+        return moveList[0]
     return best_move
 
 class TimeOut(Exception):
@@ -101,6 +103,7 @@ class TimeOut(Exception):
 
 def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time, time_budget, current_eval):
     if time.time() - start_time > time_budget - time_margin:
+        print("TIMEOUT")
         raise TimeOut()
 
     '''
@@ -146,7 +149,7 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
 
         #promotion
         if piece[0] == "p" and (dst[0] == 0 or dst[0] == 7):
-            score += piece_values_abs[4] - piece_values_abs[0]
+            score += piece_values_abs["q"] - piece_values_abs["p"]
 
         return score
     moves.sort(key=move_score, reverse=True)
