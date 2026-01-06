@@ -83,8 +83,10 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
                 current_eval=0
             )
             if moveList != []:
-                best_move = moveList[0]
+                best_move = best_centimove(board,moveList,base_color)
                 #print(f"best move : {best_move}")
+            print(f"Total time : {time.time() - start_time}, depth : {max_depth}")
+            print(moveList)
     except TimeOut:
         max_depth -= 1
         pass
@@ -199,6 +201,35 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
 
     return best_score, bestmovelist
 
+def best_centimove(board,moveList,base_color):
+    color = base_color
+    centiscores = []
+    for move in moveList:
+        src, dst = move
+        piece = board[src]
+        match piece[0]:
+                case "p":
+                    strat_moves = movePawn(board, dst[0], dst[1], color, base_color)
+                case "n":
+                    strat_moves = moveKnight(board, dst[0], dst[1], color)
+                case "b":
+                    strat_moves = moveBishop(board, dst[0], dst[1], color)
+                case "r":
+                    strat_moves = moveRook(board, dst[0], dst[1], color)
+                case "q":
+                    strat_moves = moveQueen(board, dst[0], dst[1], color)
+                case "k":
+                    strat_moves = moveKing(board, dst[0], dst[1], color)
+        centiscore = 0
+        for destination in strat_moves:
+            if board[destination] != "":
+                centiscore += 1
+        centiscores.append(centiscore)
+        #defended_by_pawn = [(src[0]-1,src[1]-1),(src[0]-1,src[1]+1)]
+        #defended_by_horse = moveKnight(board, src[0], src[1], color)
+        max_index = centiscores.index(max(centiscores))
+
+    return moveList[max_index]
 
 
 def generate_moves(board, color, base_color):
