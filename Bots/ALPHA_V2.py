@@ -69,6 +69,7 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     best_score = 0
     best_move = None
 
+
     try:
             score, moveList = negamax(
                 board,
@@ -79,7 +80,8 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
                 color,
                 base_color,
                 start_time,
-                time_bud
+                time_bud,
+                current_eval=0
             )
             if moveList is not []:
                 best_move = moveList[0]
@@ -97,7 +99,7 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
 class TimeOut(Exception):
     pass
 
-def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time, time_budget):
+def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time, time_budget, current_eval):
     if time.time() - start_time > time_budget - time_margin:
         raise TimeOut()
 
@@ -120,12 +122,12 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
     '''
 
     if depth == 0:
-        return evaluate(board, color), None
+        return current_eval, None
 
     best_score = -math.inf
     best_move = None
-
     moves = generate_moves(board, color, base_color)
+
     #move ordering 
     def move_score(move):
         src, dst = move
@@ -140,18 +142,18 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
             if captured == "k":
                 return 10000
             #other pieces captured
-            score += piece_values_abs[captured] - piece_values_abs[piece[0]]
+            score += piece_values_abs[captured]
 
         #promotion
         if piece[0] == "p" and (dst[0] == 0 or dst[0] == 7):
             score += piece_values_abs[4] - piece_values_abs[0]
 
         return score
-
     moves.sort(key=move_score, reverse=True)
 
     bestmovelist = []
     for move in moves:
+        next_eval = -current_eval - move_score(move)
         new_board = simulate_move(board, *move[0], *move[1])
         score, _ = negamax(
             new_board,
@@ -162,7 +164,8 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
             swap(color),
             base_color,
             start_time,
-            time_budget
+            time_budget,
+            next_eval
         )
         score = -score
         if depth == max_depth :
