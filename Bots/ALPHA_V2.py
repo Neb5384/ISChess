@@ -143,33 +143,44 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
             captured = board[dst][0]
 
             score = piece_values_abs[captured]
+            kingcapture = (captured == "k")
+        else:
+            kingcapture = False
 
         #promotion
         if piece[0] == "p" and (dst[0] == 0 or dst[0] == 7):
             score += piece_values_abs["q"] - piece_values_abs["p"]
+        
+        return score,kingcapture
+    
 
-        return score
     moves.sort(key=move_score, reverse=True)
 
     bestmovelist = []
     for move in moves:
-        next_eval = -current_eval - move_score(move)
-        new_board = simulate_move(board, *move[0], *move[1])
-        score, _ = negamax(
-            new_board,
-            depth - 1,
-            max_depth,
-            -beta,
-            -alpha,
-            swap(color),
-            base_color,
-            start_time,
-            time_budget,
-            next_eval
-        )
-        score = -score
+        move_eval,kingcapture = move_score(move)
+        next_eval = -current_eval - move_eval
+        if kingcapture:
+            score = 1000
+        else:
+            new_board = simulate_move(board, *move[0], *move[1])
+            score, _ = negamax(
+                new_board,
+                depth - 1,
+                max_depth,
+                -beta,
+                -alpha,
+                swap(color),
+                base_color,
+                start_time,
+                time_budget,
+                next_eval
+            )
+            score = -score
         if depth == max_depth :
+            print(f"Move {move}: score {score}, best_score {best_score}")
             if score == best_score:
+                print(f"  Adding to bestmovelist")
                 bestmovelist.append(move)
                 #print(f"{move} ADDED TO THE LIST")
 
