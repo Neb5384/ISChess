@@ -14,7 +14,6 @@ import math
 #   Simply move the pawns forward and tries to capture as soon as possible
 #TODO : 
 # - MOVES DU DEBUT (BEST MOVES)
-# - SELECTION D'UN BON MOVE SI PLUIS DE TEMPS
 # - EVITER LES MOVES REPETITIFS
 # - TRANSPOSITION TABLE -> GARDER EN CACHE LES COUPS ET LEUR EVALUATION
 # - TEST SUR PLUSIEURS BOARDS FIXES
@@ -53,7 +52,7 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     print("ALPHAV356 =====")
     start_time = time.time()
     global time_margin
-    time_margin = 0.2
+    time_margin = 0.15
     depth = 5
     max_depth = depth
     time_budget = time_bud
@@ -68,11 +67,13 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     best_move = None
 
 
+    #TODO : garder best moves if further depth are not possible
     try:
+        for depth in range(1, max_depth + 1):
             score, moveList = negamax(
                 board,
                 depth,
-                max_depth,
+                depth,
                 -math.inf,
                 math.inf,
                 color,
@@ -81,9 +82,11 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
                 time_bud,
                 current_eval=0
             )
-            if moveList is not []:
+            if moveList != []:
                 best_move = moveList[0]
+                #print(f"best move : {best_move}")
     except TimeOut:
+        max_depth -= 1
         pass
     
     
@@ -100,6 +103,7 @@ class TimeOut(Exception):
 
 def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time, time_budget, current_eval):
     if time.time() - start_time > time_budget - time_margin:
+        print("TIMEOUT")
         raise TimeOut()
 
     '''
