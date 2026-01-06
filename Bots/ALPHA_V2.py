@@ -13,13 +13,10 @@ import time
 import math
 #   Simply move the pawns forward and tries to capture as soon as possible
 #TODO : 
-# - PURGER CEUX QUI PUENT - GOOD -> refactor
 # - MOVES DU DEBUT (BEST MOVES)
-# - DEUXIEME NOTATION POUR LES CAS D'EGALITE (P.E : AVANCER PIECE = MIEUX, SI RIEN; RANDOM) - a voir si vraiment game changer
 # - SELECTION D'UN BON MOVE SI PLUIS DE TEMPS
 # - EVITER LES MOVES REPETITIFS
 # - TRANSPOSITION TABLE -> GARDER EN CACHE LES COUPS ET LEUR EVALUATION
-# - TROUVER BEST MOVE EN MEME TEMPS QUE LA CREATION DU GRAPHE ? OU TRIER MIEUX LA LSITE DES MOVES POUR AVOIR LES MEILLEURS EN PREMIER ? - GOOD DU COUP 
 # - TEST SUR PLUSIEURS BOARDS FIXES
 # - CLASSIFICATION DE L'ELO
 # - POWERPOINT
@@ -57,8 +54,9 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     start_time = time.time()
     global time_margin
     time_margin = 0.2
+    depth = 3
     global max_depth
-    max_depth = 5
+    max_depth = 3
     time_budget = time_bud
 
     global color
@@ -71,11 +69,12 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     best_score = 0
     best_move = None
 
+
     try:
-        for depth in range(1, max_depth + 1):
-            score, move = negamax(
+            score, moveList = negamax(
                 board,
                 depth,
+                max_depth,
                 -math.inf,
                 math.inf,
                 color,
@@ -83,21 +82,25 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
                 start_time,
                 time_bud
             )
-            if move is not None:
-                best_move = move
+            if moveList is not []:
+                best_move = moveList[0]
                 best_score = score
-            print(f"depth : {depth} - time : {time.time() - start_time}")
     except TimeOut:
         pass
+    
+    
 
-
-    print(f"best move : {move[0]} to {move[1]}, score = {best_score}")
+    #print(f"best move : {move[0]} to {move[1]}, score = {best_score}")
+    print(f"best moves : {moveList}")
+    print(f"Total time : {time.time() - start_time}, depth : {max_depth}")
+    if len(moveList) == 1:
+        return moveList[0]
     return best_move
 
 class TimeOut(Exception):
     pass
 
-def negamax(board, depth, alpha, beta, color, base_color, start_time, time_budget):
+def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time, time_budget):
     if time.time() - start_time > time_budget - time_margin:
         raise TimeOut()
 
@@ -150,11 +153,13 @@ def negamax(board, depth, alpha, beta, color, base_color, start_time, time_budge
 
     moves.sort(key=move_score, reverse=True)
 
+    bestmovelist = []
     for move in moves:
         new_board = simulate_move(board, *move[0], *move[1])
         score, _ = negamax(
             new_board,
             depth - 1,
+            max_depth,
             -beta,
             -alpha,
             swap(color),
@@ -163,10 +168,20 @@ def negamax(board, depth, alpha, beta, color, base_color, start_time, time_budge
             time_budget
         )
         score = -score
+        if depth == max_depth :
+            if score == best_score:
+                bestmovelist.append(move)
+                #print(f"{move} ADDED TO THE LIST")
 
+            if score > best_score:
+                best_score = score
+                bestmovelist.clear()
+                #print(f"MOVELIST CLEARED")
+
+                bestmovelist.append(move)
+                #print(f"{move} ADDED TO THE LIST")
         if score > best_score:
             best_score = score
-            best_move = move
 
         alpha = max(alpha, score)
         if alpha >= beta:
@@ -184,7 +199,7 @@ def negamax(board, depth, alpha, beta, color, base_color, start_time, time_budge
 
 
 
-    return best_score, best_move
+    return best_score, bestmovelist
 
 
 def generate_moves(board, color, base_color):
@@ -325,4 +340,4 @@ def moveQueen(board,x,y,color):
 
 
 
-register_chess_bot("ALPHAV356", chess_bot)
+register_chess_bot("ALPHA_V2", chess_bot)
