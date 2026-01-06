@@ -187,6 +187,7 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
         if alpha >= beta:
             break
 
+#
     '''
         flag = "EXACT"
     if best_score <= alpha_orig:
