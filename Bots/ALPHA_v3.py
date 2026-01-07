@@ -49,7 +49,7 @@ piece_values = {
     }
 
 def chess_bot(player_sequence, board, time_bud, **kwargs):
-    print("ALPHAV356 =====")
+    print("ALPHAV356 ===== TEST 1")
     start_time = time.time()
     global time_margin
     time_margin = 0.15
@@ -66,6 +66,8 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     base_color = color
     best_move = None
 
+    #initial_eval = evaluate(board, base_color)
+    #TODO : garder best moves if further depth are not possible
     try:
         for depth in range(1, max_depth + 1):
             score, moveList = negamax(
@@ -78,17 +80,19 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
                 base_color,
                 start_time,
                 time_bud,
-                current_eval=0
+                evaluate(board,base_color)
             )
             if moveList != []:
                 best_move = best_centimove(board,moveList,base_color)
                 #print(f"best move : {best_move}")
             print(f"Total time : {time.time() - start_time}, depth : {depth}")
-            print(moveList)
+            print(f"final best moveList : {moveList}")
     except TimeOut:
         max_depth -= 1
         pass
     
+    
+
     #print(f"best move : {move[0]} to {move[1]}, score = {best_score}")
     print(f"best moves : {moveList}")
     print(f"Total time : {time.time() - start_time}, depth : {max_depth}")
@@ -139,71 +143,48 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
             captured = board[dst][0]
 
             score = piece_values_abs[captured]
+
         #promotion
         if piece[0] == "p" and (dst[0] == 0 or dst[0] == 7):
             score += piece_values_abs["q"] - piece_values_abs["p"]
 
-        
         return score
-    
-    def is_kingcapture(move):
-        src, dst = move
-        piece = board[src]
-        if board[dst] != "":
-            captured = board[dst][0]
-            kingcapture = (captured == "k")
-        else:
-            kingcapture = False
-        return kingcapture
-    
-
     moves.sort(key=move_score, reverse=True)
 
     bestmovelist = []
-    for move in moves:
-        move_eval = move_score(move)
-        kingcapture = is_kingcapture(move)
-        next_eval = -current_eval - move_eval
-        if kingcapture:
-            score = 1000
-        else:
-            new_board = simulate_move(board, *move[0], *move[1])
-            score, _ = negamax(
-                new_board,
-                depth - 1,
-                max_depth,
-                -beta,
-                -alpha,
-                swap(color),
-                base_color,
-                start_time,
-                time_budget,
-                next_eval
-            )
-            score = -score
 
-        if score == 1000 or score == -1000 or eval == 1000:  
-            print(f"{depth}: {move} score={score} current_eval={current_eval}, next_eval={next_eval} board = {board}")
+    for move in moves:
+        next_eval = -current_eval - move_score(move)
+        new_board = simulate_move(board, *move[0], *move[1])
+        score, _ = negamax(
+            new_board,
+            depth - 1,
+            max_depth,
+            -beta,
+            -alpha,
+            swap(color),
+            base_color,
+            start_time,
+            time_budget,
+            next_eval
+        )
+        score = -score
         if depth == max_depth :
-            print(f"Move {move}: score {score}, best_score {best_score}")
-            if score == best_score:
-                print(f"  Adding to bestmovelist")
-                bestmovelist.append(move)
-                #print(f"{move} ADDED TO THE LIST")
+            print(f"Move {move} evaluated: score = {score}, best_score = {best_score}")
+
 
             if score > best_score:
                 best_score = score
                 bestmovelist.clear()
-                #print(f"MOVELIST CLEARED")
-
+                print(f"MOVELIST CLEARED")
                 bestmovelist.append(move)
-                #print(f"{move} ADDED TO THE LIST")
+                print(f"{move} ADDED TO THE LIST")
+            elif score == best_score:
+                bestmovelist.append(move)
+                print(f"{move} ADDED TO THE LIST")
+        
         if score > best_score:
             best_score = score
-
-
-        #if depth == 1:  # Check specifically at leaf+1
-        #    print(f"D1 START: alpha={alpha}, beta={beta}, alpha < beta? {alpha < beta}")
 
         alpha = max(alpha, score)
         if alpha >= beta:
@@ -220,9 +201,11 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
     TT[key] = (depth, best_score, flag)
     '''
 
+
+
     return best_score, bestmovelist
 
-""" def best_centimove(board,moveList,base_color):
+def best_centimove(board,moveList,base_color):
     color = base_color
     centiscores = []
     for move in moveList:
@@ -250,10 +233,8 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
         #defended_by_horse = moveKnight(board, src[0], src[1], color)
         max_index = centiscores.index(max(centiscores))
 
-    return moveList[max_index] """
+    return moveList[max_index]
 
-def best_centimove(board,moveList,base_color):
-    return moveList[0]
 
 def generate_moves(board, color, base_color):
     moves = []
@@ -282,7 +263,9 @@ def generate_moves(board, color, base_color):
                     dests = []
 
             for d in dests:
-                moves.append(((x, y), d))
+                new_board = simulate_move(board, x, y, d[0], d[1])
+                if not is_in_check(new_board, color):
+                    moves.append(((x, y), d))
     return moves
 
 
@@ -295,6 +278,48 @@ def evaluate(board, color):
                 score += piece_values[p[1] + p[0]]
     return score if color == "w" else -score
 
+def is_in_check(board, color):
+    king_pos = None
+    for x in range(8):
+        for y in range(8):
+            if board[x, y] == "k" + color:
+                king_pos = (x, y)
+                break
+        if king_pos:
+            break
+    
+    if not king_pos:
+        return True 
+    
+    #verified if any other piece is attacking the king
+    enemy_color = swap(color)
+    for x in range(8):
+        for y in range(8):
+            piece = board[x, y]
+            if piece == "" or piece[1] != enemy_color:
+                continue
+            
+            # Récupérer les moves possibles avec VOS fonctions
+            match piece[0]:
+                case "p":
+                    dests = movePawn(board, x, y, enemy_color, enemy_color)
+                case "n":
+                    dests = moveKnight(board, x, y, enemy_color)
+                case "b":
+                    dests = moveBishop(board, x, y, enemy_color)
+                case "r":
+                    dests = moveRook(board, x, y, enemy_color)
+                case "q":
+                    dests = moveQueen(board, x, y, enemy_color)
+                case "k":
+                    dests = moveKing(board, x, y, enemy_color)
+                case _:
+                    dests = []
+            
+            if king_pos in dests:
+                return True
+    
+    return False
 
 def swap(color):
     return "b" if color == "w" else "w"
@@ -393,4 +418,4 @@ def moveQueen(board,x,y,color):
 
 
 
-register_chess_bot("ALPHA_V2", chess_bot)
+register_chess_bot("ALPHA_V3", chess_bot)
