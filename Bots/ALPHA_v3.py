@@ -105,6 +105,21 @@ class TimeOut(Exception):
 def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time, time_budget):
     if time.time() - start_time > time_budget - time_margin:
         raise TimeOut()
+    
+    key = board_hash(board, color)
+
+    if key in TT:
+        tt_depth, tt_score, tt_flag = TT[key]
+        if tt_depth >= depth:
+            if tt_flag == "EXACT":
+                return tt_score, None
+            elif tt_flag == "LOWER":
+                alpha = max(alpha, tt_score)
+            elif tt_flag == "UPPER":
+                beta = min(beta, tt_score)
+            if alpha >= beta:
+                return tt_score, None
+
 
     if depth == 0:
         current_eval = evaluate(board, base_color)
@@ -112,6 +127,7 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
 
     best_score = -math.inf
     moves = generate_moves(board, color, base_color)
+    
 
     def move_score(move):
         src, dst = move
@@ -154,7 +170,19 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
         if alpha >= beta:
             break
 
+    flag = "EXACT"
+    if best_score <= alpha:
+        flag = "UPPER"
+    elif best_score >= beta:
+        flag = "LOWER"
+
+    TT[key] = (depth, best_score, flag)
+
     return best_score, bestmovelist
+
+def board_hash(board, color):
+    return (tuple(board.flatten()), color)
+
 
 def best_centimove(board,moveList,base_color):
     color = base_color
@@ -182,7 +210,7 @@ def best_centimove(board,moveList,base_color):
         centiscores.append(centiscore)
         #defended_by_pawn = [(src[0]-1,src[1]-1),(src[0]-1,src[1]+1)]
         #defended_by_horse = moveKnight(board, src[0], src[1], color)
-        max_index = centiscores.index(max(centiscores))
+    max_index = centiscores.index(max(centiscores))
 
     return moveList[max_index]
 
@@ -238,39 +266,55 @@ def is_in_check(board, color):
                 break
         if king_pos:
             break
-    
+
     if not king_pos:
-        return True 
-    
-    #verified if any other piece is attacking the king
-    enemy_color = swap(color)
-    for x in range(8):
-        for y in range(8):
-            piece = board[x, y]
-            if piece == "" or piece[1] != enemy_color:
-                continue
-            
-            # Récupérer les moves possibles avec VOS fonctions
-            match piece[0]:
-                case "p":
-                    dests = movePawn(board, x, y, enemy_color, enemy_color)
-                case "n":
-                    dests = moveKnight(board, x, y, enemy_color)
-                case "b":
-                    dests = moveBishop(board, x, y, enemy_color)
-                case "r":
-                    dests = moveRook(board, x, y, enemy_color)
-                case "q":
-                    dests = moveQueen(board, x, y, enemy_color)
-                case "k":
-                    dests = moveKing(board, x, y, enemy_color)
-                case _:
-                    dests = []
-            
-            if king_pos in dests:
+        return True
+
+    enemy = swap(color)
+    kx, ky = king_pos
+
+    pawn_dir = -1 if enemy == "w" else 1
+    for dy in (-1, 1):
+        nx, ny = kx + pawn_dir, ky + dy
+        if 0 <= nx <= 7 and 0 <= ny <= 7:
+            if board[nx, ny] == "p" + enemy:
                 return True
-    
+
+    for dx, dy in [(2,1),(2,-1),(-2,1),(-2,-1),(1,2),(1,-2),(-1,2),(-1,-2)]:
+        nx, ny = kx + dx, ky + dy
+        if 0 <= nx <= 7 and 0 <= ny <= 7:
+            if board[nx, ny] == "n" + enemy:
+                return True
+
+    directions = [
+        (1,0),(-1,0),(0,1),(0,-1),
+        (1,1),(1,-1),(-1,1),(-1,-1)
+    ]
+
+    for dx, dy in directions:
+        nx, ny = kx + dx, ky + dy
+        while 0 <= nx <= 7 and 0 <= ny <= 7:
+            piece = board[nx, ny]
+            if piece != "":
+                if piece[1] == enemy:
+                    if dx == 0 or dy == 0:
+                        if piece[0] in ("r", "q"):
+                            return True
+                    else:
+                        if piece[0] in ("b", "q"):
+                            return True
+                break
+            nx += dx
+            ny += dy
+
+    for dx, dy in [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]:
+        nx, ny = kx + dx, ky + dy
+        if 0 <= nx <= 7 and 0 <= ny <= 7:
+            if board[nx, ny] == "k" + enemy:
+                return True
+
     return False
+
 
 def swap(color):
     return "b" if color == "w" else "w"

@@ -191,6 +191,7 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
             best_score = score
 
         alpha = max(alpha, score)
+        print(f"alpha : {alpha} || beta : {beta}")
         if alpha >= beta:
             break
 
