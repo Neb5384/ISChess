@@ -133,9 +133,9 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
             kingcapture = False
         return kingcapture
     
-    src, dst = move
 #Pion bouger -> +1, défense, 
     def centiscore(move):
+        src, dst = move
         piece = board[src]
         match piece[0]:
                 case "p":
