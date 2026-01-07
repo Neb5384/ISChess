@@ -317,4 +317,4 @@ def moveQueen(board,x,y,color):
 
 
 
-register_chess_bot("ALPHA_V4", chess_bot)
+register_chess_bot("ALPHA_V4-Base", chess_bot)
