@@ -51,7 +51,7 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     global TT
     TT = {}
 
-    print("ALPHAV356 =====")
+    print("ALPHA_V4-TT =====")
     start_time = time.time()
     global time_margin
     time_margin = 0.15
@@ -69,7 +69,7 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     best_move = None
 
     try:
-        for depth in range(4, max_depth + 1):
+        for depth in range(1, max_depth + 1):
             _, best_move = negamax(
                 board,
                 depth,

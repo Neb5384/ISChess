@@ -50,7 +50,7 @@ piece_values = {
 def chess_bot(player_sequence, board, time_bud, **kwargs):
 
 
-    print("ALPHAV356 =====")
+    print("ALPHA_V4-Centi =====")
     start_time = time.time()
     global time_margin
     time_margin = 0.15
@@ -68,7 +68,7 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     best_move = None
 
     try:
-        for depth in range(4, max_depth + 1):
+        for depth in range(1, max_depth + 1):
             _, best_move = negamax(
                 board,
                 depth,
@@ -120,6 +120,7 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
         #promotion
         if piece[0] == "p" and (dst[0] == 0 or dst[0] == 7):
             score += piece_values_abs["q"] - piece_values_abs["p"]
+        score += centiscore(board,move)/100
         return score
     
     def is_kingcapture(move):
@@ -131,10 +132,11 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
             kingcapture = False
         return kingcapture
     
-    def centiscore(move):
-        src, dst = move
+    def centiscore(board,move):
         src, dst = move
         piece = board[src]
+        board = simulate_move(board, *move[0], *move[1])
+        
         match piece[0]:
                 case "p":
                     strat_moves = movePawn(board, dst[0], dst[1], color, base_color)
@@ -153,8 +155,8 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
             if board[destination] != "":
                 centiscore += 1
 
-        centiscore -= is_in_check(move, color)
-        centiscore += is_in_check(move, swap(color))
+        centiscore -= is_in_check(board,move, color)
+        centiscore += is_in_check(board,move, swap(color))
 
         return centiscore     
 
@@ -197,22 +199,10 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
 
     return best_score, best_move
 
-def is_in_check(board, color):
-    king_pos = None
+def is_in_check(board,move,color):
+    ky, kx = move[1]
     centipion = 0
-    for x in range(8):
-        for y in range(8):
-            if board[x, y] == "k" + color:
-                king_pos = (x, y)
-                break
-        if king_pos:
-            break
-
-    if not king_pos:
-        return centipion
-
     enemy = swap(color)
-    kx, ky = king_pos
 
     pawn_dir = -1 if enemy == "w" else 1
     for dy in (-1, 1):
