@@ -111,6 +111,8 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
                 return tt_score, None
             elif tt_flag == "LOWER":
                 alpha = max(alpha, tt_score)
+            elif tt_flag == "UPPER":
+                beta = min(beta, tt_score)
             if alpha >= beta:
                 return tt_score, None
     
@@ -187,8 +189,11 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
 
 #
     
+
         flag = "EXACT"
-    if best_score >= beta:
+    if best_score <= alpha_orig:
+        flag = "UPPER"
+    elif best_score >= beta:
         flag = "LOWER"
 
     TT[key] = (depth, best_score, flag)
