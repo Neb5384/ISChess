@@ -85,7 +85,7 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
             if moveList != []:
                 best_move = best_centimove(board,moveList,base_color)
                 #print(f"best move : {best_move}")
-            print(f"Total time : {time.time() - start_time}, depth : {max_depth}")
+            print(f"Total time : {time.time() - start_time}, depth : {depth}")
             print(moveList)
     except TimeOut:
         max_depth -= 1
@@ -143,22 +143,30 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
             captured = board[dst][0]
 
             score = piece_values_abs[captured]
-            kingcapture = (captured == "k")
-        else:
-            kingcapture = False
-
         #promotion
         if piece[0] == "p" and (dst[0] == 0 or dst[0] == 7):
             score += piece_values_abs["q"] - piece_values_abs["p"]
+
         
-        return score,kingcapture
+        return score
+    
+    def is_kingcapture(move):
+        src, dst = move
+        piece = board[src]
+        if board[dst] != "":
+            captured = board[dst][0]
+            kingcapture = (captured == "k")
+        else:
+            kingcapture = False
+        return kingcapture
     
 
     moves.sort(key=move_score, reverse=True)
 
     bestmovelist = []
     for move in moves:
-        move_eval,kingcapture = move_score(move)
+        move_eval = move_score(move)
+        kingcapture = is_kingcapture(move)
         next_eval = -current_eval - move_eval
         if kingcapture:
             score = 1000
@@ -177,6 +185,9 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
                 next_eval
             )
             score = -score
+
+        if score == 1000 or score == -1000 or eval == 1000:  
+            print(f"{depth}: {move} score={score} current_eval={current_eval}, next_eval={next_eval} board = {board}")
         if depth == max_depth :
             print(f"Move {move}: score {score}, best_score {best_score}")
             if score == best_score:
@@ -194,6 +205,10 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
         if score > best_score:
             best_score = score
 
+
+        #if depth == 1:  # Check specifically at leaf+1
+        #    print(f"D1 START: alpha={alpha}, beta={beta}, alpha < beta? {alpha < beta}")
+
         alpha = max(alpha, score)
         if alpha >= beta:
             break
@@ -209,11 +224,9 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
     TT[key] = (depth, best_score, flag)
     '''
 
-
-
     return best_score, bestmovelist
 
-def best_centimove(board,moveList,base_color):
+""" def best_centimove(board,moveList,base_color):
     color = base_color
     centiscores = []
     for move in moveList:
@@ -241,8 +254,10 @@ def best_centimove(board,moveList,base_color):
         #defended_by_horse = moveKnight(board, src[0], src[1], color)
         max_index = centiscores.index(max(centiscores))
 
-    return moveList[max_index]
+    return moveList[max_index] """
 
+def best_centimove(board,moveList,base_color):
+    return moveList[0]
 
 def generate_moves(board, color, base_color):
     moves = []
