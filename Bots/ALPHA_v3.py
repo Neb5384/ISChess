@@ -80,7 +80,6 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
                 base_color,
                 start_time,
                 time_bud,
-                evaluate(board,base_color)
             )
             if moveList != []:
                 best_move = best_centimove(board,moveList,base_color)
@@ -103,58 +102,32 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
 class TimeOut(Exception):
     pass
 
-def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time, time_budget, current_eval):
+def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time, time_budget):
     if time.time() - start_time > time_budget - time_margin:
-        print("TIMEOUT")
         raise TimeOut()
 
-    '''
-    alpha_orig = alpha
-
-    key = (board.tobytes(), color)
-
-    if key in TT:
-        tt_depth, tt_score, tt_flag = TT[key]
-        if tt_depth >= depth:
-            if tt_flag == "EXACT":
-                return tt_score, None
-            elif tt_flag == "LOWER":
-                alpha = max(alpha, tt_score)
-            elif tt_flag == "UPPER":
-                beta = min(beta, tt_score)
-            if alpha >= beta:
-                return tt_score, None
-    '''
-
     if depth == 0:
-        return current_eval, None
+        current_eval = evaluate(board, base_color)
+        return current_eval if color == base_color else -current_eval, None
 
     best_score = -math.inf
-    best_move = None
     moves = generate_moves(board, color, base_color)
 
-    #move ordering 
     def move_score(move):
         src, dst = move
         piece = board[src]
         score = 0
-
         if board[dst] != "":
             captured = board[dst][0]
-
             score = piece_values_abs[captured]
-
-        #promotion
         if piece[0] == "p" and (dst[0] == 0 or dst[0] == 7):
             score += piece_values_abs["q"] - piece_values_abs["p"]
-
         return score
+    
     moves.sort(key=move_score, reverse=True)
-
     bestmovelist = []
 
     for move in moves:
-        next_eval = -current_eval - move_score(move)
         new_board = simulate_move(board, *move[0], *move[1])
         score, _ = negamax(
             new_board,
@@ -165,43 +138,21 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
             swap(color),
             base_color,
             start_time,
-            time_budget,
-            next_eval
+            time_budget  # RETIRE current_eval ET next_eval
         )
         score = -score
-        if depth == max_depth :
-            print(f"Move {move} evaluated: score = {score}, best_score = {best_score}")
-
-
-            if score > best_score:
-                best_score = score
-                bestmovelist.clear()
-                print(f"MOVELIST CLEARED")
-                bestmovelist.append(move)
-                print(f"{move} ADDED TO THE LIST")
-            elif score == best_score:
-                bestmovelist.append(move)
-                print(f"{move} ADDED TO THE LIST")
         
         if score > best_score:
             best_score = score
+            if depth == max_depth:
+                bestmovelist.clear()
+                bestmovelist.append(move)
+        elif score == best_score and depth == max_depth:
+            bestmovelist.append(move)
 
         alpha = max(alpha, score)
         if alpha >= beta:
             break
-
-#
-    '''
-        flag = "EXACT"
-    if best_score <= alpha_orig:
-        flag = "UPPER"
-    elif best_score >= beta:
-        flag = "LOWER"
-
-    TT[key] = (depth, best_score, flag)
-    '''
-
-
 
     return best_score, bestmovelist
 
@@ -342,7 +293,7 @@ def movePawn(board, x, y, color, base_color):
         dir = -1
     moveList = []
 
-    if board[x+dir,y] == "":
+    if 0 <= x+dir <= 7 and board[x+dir, y] == "":
         moveList.append((x+dir, y))
     if y+1 <= 7 and (board[x+dir,y+1] != "" and board[x+dir,y+1][1] != color):
         moveList.append((x+dir, y+1))
