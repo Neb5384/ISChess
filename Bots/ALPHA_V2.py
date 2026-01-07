@@ -20,7 +20,6 @@ import math
 # - CLASSIFICATION DE L'ELO
 # - POWERPOINT
 
-TT = {}
 pieces = ['p', 'n', 'b', 'r', 'q', 'K']
 
 
@@ -49,11 +48,13 @@ piece_values = {
     }
 
 def chess_bot(player_sequence, board, time_bud, **kwargs):
+
+
     print("ALPHAV356 =====")
     start_time = time.time()
     global time_margin
     time_margin = 0.15
-    depth = 5
+    depth = 10
     max_depth = depth
     time_budget = time_bud
 
@@ -67,7 +68,7 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     best_move = None
 
     try:
-        for depth in range(1, max_depth + 1):
+        for depth in range(4, max_depth + 1):
             _, best_move = negamax(
                 board,
                 depth,
@@ -97,23 +98,9 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
         print("TIMEOUT")
         raise TimeOut()
 
-    '''
+    
     alpha_orig = alpha
-
-    key = (board.tobytes(), color)
-
-    if key in TT:
-        tt_depth, tt_score, tt_flag = TT[key]
-        if tt_depth >= depth:
-            if tt_flag == "EXACT":
-                return tt_score, None
-            elif tt_flag == "LOWER":
-                alpha = max(alpha, tt_score)
-            elif tt_flag == "UPPER":
-                beta = min(beta, tt_score)
-            if alpha >= beta:
-                return tt_score, None
-    '''
+    
 
     if depth == 0:
         return current_eval, None
@@ -141,7 +128,6 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
     
     def is_kingcapture(move):
         src, dst = move
-        piece = board[src]
         if board[dst] != "":
             captured = board[dst][0]
             kingcapture = (captured == "k")
@@ -185,17 +171,7 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
             break
         if alpha == beta:
             break
-
-#
-    '''
-        flag = "EXACT"
-    if best_score <= alpha_orig:
-        flag = "UPPER"
-    elif best_score >= beta:
-        flag = "LOWER"
-
-    TT[key] = (depth, best_score, flag)
-    '''
+    
 
     return best_score, best_move
 
