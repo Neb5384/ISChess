@@ -66,8 +66,6 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
     base_color = color
     best_move = None
 
-
-    #TODO : garder best moves if further depth are not possible
     try:
         for depth in range(1, max_depth + 1):
             score, moveList = negamax(
@@ -89,8 +87,6 @@ def chess_bot(player_sequence, board, time_bud, **kwargs):
         max_depth -= 1
         pass
     
-    
-
     #print(f"best move : {move[0]} to {move[1]}, score = {best_score}")
     print(f"best moves : {moveList}")
     print(f"Total time : {time.time() - start_time}, depth : {max_depth}")
