@@ -50,7 +50,7 @@ piece_values = {
 def chess_bot(player_sequence, board, time_bud, **kwargs):
 
 
-    print("ALPHAV356 =====")
+    #print("ALPHAV356 =====")
     start_time = time.time()
     global time_margin
     time_margin = 0.15

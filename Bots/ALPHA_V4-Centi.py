@@ -133,6 +133,7 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
     
     def centiscore(move):
         src, dst = move
+        src, dst = move
         piece = board[src]
         match piece[0]:
                 case "p":
@@ -151,6 +152,10 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
         for destination in strat_moves:
             if board[destination] != "":
                 centiscore += 1
+
+        centiscore -= is_in_check(move, color)
+        centiscore += is_in_check(move, swap(color))
+
         return centiscore     
 
     moves.sort(key=move_score, reverse=True)
@@ -192,6 +197,69 @@ def negamax(board, depth, max_depth, alpha, beta, color, base_color, start_time,
 
     return best_score, best_move
 
+def is_in_check(board, color):
+    king_pos = None
+    centipion = 0
+    for x in range(8):
+        for y in range(8):
+            if board[x, y] == "k" + color:
+                king_pos = (x, y)
+                break
+        if king_pos:
+            break
+
+    if not king_pos:
+        return centipion
+
+    enemy = swap(color)
+    kx, ky = king_pos
+
+    pawn_dir = -1 if enemy == "w" else 1
+    for dy in (-1, 1):
+        nx, ny = kx + pawn_dir, ky + dy
+        if 0 <= nx <= 7 and 0 <= ny <= 7:
+            if board[nx, ny] == "p" + enemy:
+                centipion += 1
+                return centipion
+
+    for dx, dy in [(2,1),(2,-1),(-2,1),(-2,-1),(1,2),(1,-2),(-1,2),(-1,-2)]:
+        nx, ny = kx + dx, ky + dy
+        if 0 <= nx <= 7 and 0 <= ny <= 7:
+            if board[nx, ny] == "n" + enemy:
+                centipion += 1
+                return centipion
+
+    directions = [
+        (1,0),(-1,0),(0,1),(0,-1),
+        (1,1),(1,-1),(-1,1),(-1,-1)
+    ]
+
+    for dx, dy in directions:
+        nx, ny = kx + dx, ky + dy
+        while 0 <= nx <= 7 and 0 <= ny <= 7:
+            piece = board[nx, ny]
+            if piece != "":
+                if piece[1] == enemy:
+                    if dx == 0 or dy == 0:
+                        if piece[0] in ("r", "q"):
+                            centipion += 1
+                            return centipion
+                    else:
+                        if piece[0] in ("b", "q"):
+                            centipion += 1
+                            return centipion
+                break
+            nx += dx
+            ny += dy
+
+    for dx, dy in [(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]:
+        nx, ny = kx + dx, ky + dy
+        if 0 <= nx <= 7 and 0 <= ny <= 7:
+            if board[nx, ny] == "k" + enemy:
+                centipion += 1
+                return centipion
+
+    return centipion
 
 def best_centimove(board,moveList,base_color):
     return moveList[0] 
